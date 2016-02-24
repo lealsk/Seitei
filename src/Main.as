@@ -1,6 +1,8 @@
 package {
 
 import flash.desktop.NativeApplication;
+import flash.geom.Matrix;
+import starling.display.Image;
 
 import starling.display.Quad;
 import starling.display.Sprite;
@@ -8,6 +10,7 @@ import starling.events.KeyboardEvent;
 import flash.ui.Keyboard;
 
 import starling.events.Event;
+import starling.textures.RenderTexture;
 
 public class Main extends Sprite {
     private var pressedKeys:Array = new Array(300);
@@ -16,6 +19,13 @@ public class Main extends Sprite {
     private var crate2:Object = {view:null, physicsData:null};
     private var core:Object = {view:null, physicsData:null};
     private var physicsDatas:Array = new Array();
+
+    private var shadow1:Polygon;
+    private var shadow2:Polygon;
+    private var shadow3:Polygon;
+    private var shadow4:Polygon;
+    private var shadowTexture:RenderTexture;
+    private var shadow:Image;
 
     public function Main() {
         addEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
@@ -50,6 +60,25 @@ public class Main extends Sprite {
         physicsDatas.push(crate.physicsData);
 
 
+        shadowTexture = new RenderTexture(stage.stageWidth, stage.stageHeight);
+
+        shadow1 = new Polygon([{x:0,y:0}, {x:50,y:0}, {x:0,y:0},{x:0,y:0}], 0x000000);
+        shadow1.x = 100;
+        shadow1.y = 100;
+
+        shadow2 = new Polygon([{x:0,y:0}, {x:0,y:50}, {x:0,y:0},{x:0,y:0}], 0x000000);
+        shadow2.x = 150;
+        shadow2.y = 100;
+
+        shadow3 = new Polygon([{x:0,y:0}, {x:50,y:0}, {x:0,y:0},{x:0,y:0}], 0x000000);
+        shadow3.x = 100;
+        shadow3.y = 150;
+
+        shadow4 = new Polygon([{x:0,y:0}, {x:0,y:50}, {x:0,y:0},{x:0,y:0}], 0x000000);
+        shadow4.x = 100;
+        shadow4.y = 100;
+
+
         crate2.view = new Quad(50, 50, 0xffaa88);
         addChild(crate2.view);
 
@@ -82,9 +111,39 @@ public class Main extends Sprite {
         core.physicsData.x = 400;
         core.physicsData.y = 320;
         physicsDatas.push(core.physicsData);
+
+        shadow = new Image(shadowTexture);
+        shadow.alpha = .1;
+        addChild(shadow);
+
     }
 
     private function onEnterFrame(e:Event):void{
+
+        shadow1.vertexData.setPosition(2, crate.physicsData.x+((crate.physicsData.x + 50) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 0) - char.physicsData.y)*100);
+        shadow1.vertexData.setPosition(3, crate.physicsData.x+((crate.physicsData.x + 0) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 0) - char.physicsData.y)*100);
+        shadow2.vertexData.setPosition(2, crate.physicsData.x+((crate.physicsData.x + 0) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 50) - char.physicsData.y)*100);
+        shadow2.vertexData.setPosition(3, crate.physicsData.x+((crate.physicsData.x + 0) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 0) - char.physicsData.y)*100);
+        shadow3.vertexData.setPosition(2, crate.physicsData.x+((crate.physicsData.x + 50) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 50) - char.physicsData.y)*100);
+        shadow3.vertexData.setPosition(3, crate.physicsData.x+((crate.physicsData.x + 0) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 50) - char.physicsData.y)*100);
+        shadow4.vertexData.setPosition(2, crate.physicsData.x+((crate.physicsData.x + 0) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 50) - char.physicsData.y)*100);
+        shadow4.vertexData.setPosition(3, crate.physicsData.x+((crate.physicsData.x + 0) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 0) - char.physicsData.y)*100);
+
+        shadowTexture.clear();
+        var matrix:Matrix = new Matrix();
+        matrix.translate(shadow1.x, shadow1.y);
+        shadowTexture.draw(shadow1, matrix);
+        matrix.translate(-shadow1.x, -shadow1.y);
+        matrix.translate(shadow2.x, shadow2.y);
+        shadowTexture.draw(shadow2, matrix);
+        matrix.translate(-shadow2.x, -shadow2.y);
+        matrix.translate(shadow3.x, shadow3.y);
+        shadowTexture.draw(shadow3, matrix);
+        matrix.translate(-shadow3.x, -shadow3.y);
+        matrix.translate(shadow4.x, shadow4.y);
+        shadowTexture.draw(shadow4, matrix);
+
+
         char.physicsData.velX = 0;
         char.physicsData.velY = 0;
         var spd:Number = 3;
