@@ -8,7 +8,7 @@ public class PhysicsData {
     public var velX:Number = 0;
     public var velY:Number = 0;
     public var width:Number = 0;
-    public var heigth:Number = 0;
+    public var height:Number = 0;
     public var colliding:PhysicsData = null;
     public var checkCollisions:Boolean = false;
     public var container:Boolean = false;

@@ -20,12 +20,63 @@ public class Main extends Sprite {
     private var core:Object = {view:null, physicsData:null};
     private var physicsDatas:Array = new Array();
 
-    private var shadow1:Polygon;
-    private var shadow2:Polygon;
-    private var shadow3:Polygon;
-    private var shadow4:Polygon;
+    private var shadows:Array = [];
     private var shadowTexture:RenderTexture;
-    private var shadow:Image;
+    private var shadowImage:Image;
+    private var shadowObjects:Array = new Array();
+
+    private function createShadows(element:Object):Object{
+        var shadows:Array = new Array();
+        var shadow:Polygon;
+
+        shadow = new Polygon([{x:0,y:0}, {x:element.physicsData.width,y:0}, {x:0,y:0},{x:0,y:0}], 0x000000);
+        shadow.x = element.physicsData.x;
+        shadow.y = element.physicsData.y;
+        shadows.push(shadow);
+
+        shadow = new Polygon([{x:0,y:0}, {x:0,y:element.physicsData.height}, {x:0,y:0},{x:0,y:0}], 0x000000);
+        shadow.x = element.physicsData.x + element.physicsData.width;
+        shadow.y = element.physicsData.y;
+        shadows.push(shadow);
+
+        shadow = new Polygon([{x:0,y:0}, {x:element.physicsData.width,y:0}, {x:0,y:0},{x:0,y:0}], 0x000000);
+        shadow.x = element.physicsData.x;
+        shadow.y = element.physicsData.y + element.physicsData.height;
+        shadows.push(shadow);
+
+        shadow = new Polygon([{x:0,y:0}, {x:0,y:element.physicsData.height}, {x:0,y:0},{x:0,y:0}], 0x000000);
+        shadow.x = element.physicsData.x;
+        shadow.y = element.physicsData.y;
+        shadows.push(shadow);
+
+        return {element:element, shadows:shadows};
+    }
+
+    private function updateShadow(centerX:Number, centerY:Number, shadow:Object):void{
+        var posX:Number = shadow.element.physicsData.x;
+        var posY:Number = shadow.element.physicsData.y;
+        shadow.shadows[0].vertexData.setPosition(2, posX+((posX + shadow.element.physicsData.width) - centerX)*100, posY+((posY + 0) - centerY)*100);
+        shadow.shadows[0].vertexData.setPosition(3, posX+((posX + 0) - centerX)*100, posY+((posY + 0) - centerY)*100);
+        shadow.shadows[1].vertexData.setPosition(2, posX+((posX + 0) - centerX)*100, posY+((posY + shadow.element.physicsData.height) - centerY)*100);
+        shadow.shadows[1].vertexData.setPosition(3, posX+((posX + 0) - centerX)*100, posY+((posY + 0) - centerY)*100);
+        shadow.shadows[2].vertexData.setPosition(2, posX+((posX + shadow.element.physicsData.width) - centerX)*100, posY+((posY + shadow.element.physicsData.height) - centerY)*100);
+        shadow.shadows[2].vertexData.setPosition(3, posX+((posX + 0) - centerX)*100, posY+((posY + shadow.element.physicsData.height) - centerY)*100);
+        shadow.shadows[3].vertexData.setPosition(2, posX+((posX + 0) - centerX)*100, posY+((posY + shadow.element.physicsData.height) - centerY)*100);
+        shadow.shadows[3].vertexData.setPosition(3, posX+((posX + 0) - centerX)*100, posY+((posY + 0) - centerY)*100);
+
+        var matrix:Matrix = new Matrix();
+        matrix.translate(shadow.shadows[0].x, shadow.shadows[0].y);
+        shadowTexture.draw(shadow.shadows[0], matrix);
+        matrix.translate(-shadow.shadows[0].x, -shadow.shadows[0].y);
+        matrix.translate(shadow.shadows[1].x, shadow.shadows[1].y);
+        shadowTexture.draw(shadow.shadows[1], matrix);
+        matrix.translate(-shadow.shadows[1].x, -shadow.shadows[1].y);
+        matrix.translate(shadow.shadows[2].x, shadow.shadows[2].y);
+        shadowTexture.draw(shadow.shadows[2], matrix);
+        matrix.translate(-shadow.shadows[2].x, -shadow.shadows[2].y);
+        matrix.translate(shadow.shadows[3].x, shadow.shadows[3].y);
+        shadowTexture.draw(shadow.shadows[3], matrix);
+    }
 
     public function Main() {
         addEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
@@ -44,7 +95,7 @@ public class Main extends Sprite {
 
         map.physicsData = new PhysicsData();
         map.physicsData.width = 700;
-        map.physicsData.heigth = 500;
+        map.physicsData.height = 500;
         map.physicsData.container = true;
         physicsDatas.push(map.physicsData);
 
@@ -54,7 +105,7 @@ public class Main extends Sprite {
 
         crate.physicsData = new PhysicsData();
         crate.physicsData.width = 50;
-        crate.physicsData.heigth = 50;
+        crate.physicsData.height = 50;
         crate.physicsData.x = 100;
         crate.physicsData.y = 100;
         physicsDatas.push(crate.physicsData);
@@ -62,29 +113,13 @@ public class Main extends Sprite {
 
         shadowTexture = new RenderTexture(stage.stageWidth, stage.stageHeight);
 
-        shadow1 = new Polygon([{x:0,y:0}, {x:50,y:0}, {x:0,y:0},{x:0,y:0}], 0x000000);
-        shadow1.x = 100;
-        shadow1.y = 100;
-
-        shadow2 = new Polygon([{x:0,y:0}, {x:0,y:50}, {x:0,y:0},{x:0,y:0}], 0x000000);
-        shadow2.x = 150;
-        shadow2.y = 100;
-
-        shadow3 = new Polygon([{x:0,y:0}, {x:50,y:0}, {x:0,y:0},{x:0,y:0}], 0x000000);
-        shadow3.x = 100;
-        shadow3.y = 150;
-
-        shadow4 = new Polygon([{x:0,y:0}, {x:0,y:50}, {x:0,y:0},{x:0,y:0}], 0x000000);
-        shadow4.x = 100;
-        shadow4.y = 100;
-
 
         crate2.view = new Quad(50, 50, 0xffaa88);
         addChild(crate2.view);
 
         crate2.physicsData = new PhysicsData();
         crate2.physicsData.width = 50;
-        crate2.physicsData.heigth = 50;
+        crate2.physicsData.height = 50;
         crate2.physicsData.x = 200;
         crate2.physicsData.y = 120;
         physicsDatas.push(crate2.physicsData);
@@ -95,7 +130,7 @@ public class Main extends Sprite {
 
         char.physicsData = new PhysicsData();
         char.physicsData.width = 30;
-        char.physicsData.heigth = 30;
+        char.physicsData.height = 30;
         char.physicsData.x = 200;
         char.physicsData.y = 200;
         char.physicsData.checkCollisions = true;
@@ -107,42 +142,28 @@ public class Main extends Sprite {
 
         core.physicsData = new PhysicsData();
         core.physicsData.width = 20;
-        core.physicsData.heigth = 20;
+        core.physicsData.height = 20;
         core.physicsData.x = 400;
         core.physicsData.y = 320;
         physicsDatas.push(core.physicsData);
 
-        shadow = new Image(shadowTexture);
-        shadow.alpha = .1;
-        addChild(shadow);
+        shadows.push(createShadows(crate));
+        shadows.push(createShadows(crate2));
+        shadows.push(createShadows(core));
+
+        shadowImage = new Image(shadowTexture);
+        shadowImage.alpha = .1;
+        addChild(shadowImage);
 
     }
 
     private function onEnterFrame(e:Event):void{
 
-        shadow1.vertexData.setPosition(2, crate.physicsData.x+((crate.physicsData.x + 50) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 0) - char.physicsData.y)*100);
-        shadow1.vertexData.setPosition(3, crate.physicsData.x+((crate.physicsData.x + 0) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 0) - char.physicsData.y)*100);
-        shadow2.vertexData.setPosition(2, crate.physicsData.x+((crate.physicsData.x + 0) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 50) - char.physicsData.y)*100);
-        shadow2.vertexData.setPosition(3, crate.physicsData.x+((crate.physicsData.x + 0) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 0) - char.physicsData.y)*100);
-        shadow3.vertexData.setPosition(2, crate.physicsData.x+((crate.physicsData.x + 50) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 50) - char.physicsData.y)*100);
-        shadow3.vertexData.setPosition(3, crate.physicsData.x+((crate.physicsData.x + 0) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 50) - char.physicsData.y)*100);
-        shadow4.vertexData.setPosition(2, crate.physicsData.x+((crate.physicsData.x + 0) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 50) - char.physicsData.y)*100);
-        shadow4.vertexData.setPosition(3, crate.physicsData.x+((crate.physicsData.x + 0) - char.physicsData.x)*100, crate.physicsData.y+((crate.physicsData.y + 0) - char.physicsData.y)*100);
-
         shadowTexture.clear();
-        var matrix:Matrix = new Matrix();
-        matrix.translate(shadow1.x, shadow1.y);
-        shadowTexture.draw(shadow1, matrix);
-        matrix.translate(-shadow1.x, -shadow1.y);
-        matrix.translate(shadow2.x, shadow2.y);
-        shadowTexture.draw(shadow2, matrix);
-        matrix.translate(-shadow2.x, -shadow2.y);
-        matrix.translate(shadow3.x, shadow3.y);
-        shadowTexture.draw(shadow3, matrix);
-        matrix.translate(-shadow3.x, -shadow3.y);
-        matrix.translate(shadow4.x, shadow4.y);
-        shadowTexture.draw(shadow4, matrix);
-
+        for each(var shadow:Object in shadows) {
+            updateShadow(char.physicsData.x, char.physicsData.y, shadow);
+            updateShadow(char.physicsData.x, char.physicsData.y, shadow);
+        }
 
         char.physicsData.velX = 0;
         char.physicsData.velY = 0;
@@ -201,7 +222,7 @@ public class Main extends Sprite {
                                 data.colliding = data2;
                                 data.x -= data.velX;
                             }
-                            if (data.y < data2.y || data.y + data.heigth > data2.y + data2.heigth) {
+                            if (data.y < data2.y || data.y + data.height > data2.y + data2.height) {
                                 data.colliding = data2;
                                 data.y -= data.velY;
                             }
@@ -210,11 +231,11 @@ public class Main extends Sprite {
                             }
                         } else {
 
-                            if(data.x + data.width > data2.x && data.x < data2.x + data2.width && data.y - data.velY + data.heigth > data2.y && data.y - data.velY < data2.y + data2.heigth ){
+                            if(data.x + data.width > data2.x && data.x < data2.x + data2.width && data.y - data.velY + data.height > data2.y && data.y - data.velY < data2.y + data2.height ){
                                 data.colliding = data2;
                                 data.x -= data.velX;
                             }
-                            if(data.x - data.velX + data.width > data2.x && data.x - data.velX < data2.x + data2.width && data.y + data.heigth > data2.y && data.y < data2.y + data2.heigth ){
+                            if(data.x - data.velX + data.width > data2.x && data.x - data.velX < data2.x + data2.width && data.y + data.height > data2.y && data.y < data2.y + data2.height ){
                                 data.colliding = data2;
                                 data.y -= data.velY;
                             }
