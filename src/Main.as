@@ -1,8 +1,6 @@
 package {
 
 import flash.desktop.NativeApplication;
-import flash.geom.Matrix;
-import starling.display.Image;
 
 import starling.display.Quad;
 import starling.display.Sprite;
@@ -10,77 +8,23 @@ import starling.events.KeyboardEvent;
 import flash.ui.Keyboard;
 
 import starling.events.Event;
-import starling.textures.RenderTexture;
 
 public class Main extends Sprite {
     private var pressedKeys:Array = new Array(300);
-    private var char:Object = {view:null, physicsData:null};
-    private var crate:Object = {view:null, physicsData:null};
-    private var crate2:Object = {view:null, physicsData:null};
-    private var core:Object = {view:null, physicsData:null};
+    private var objects:Array = [];
+    private var char:Object = null;
+    private var core:Object = null;
     private var physicsDatas:Array = new Array();
 
-    private var shadows:Array = [];
-    private var shadowTexture:RenderTexture;
-    private var shadowImage:Image;
-    private var shadowObjects:Array = new Array();
-
-    private function createShadows(element:Object):Object{
-        var shadows:Array = new Array();
-        var shadow:Polygon;
-
-        shadow = new Polygon([{x:0,y:0}, {x:element.physicsData.width,y:0}, {x:0,y:0},{x:0,y:0}], 0x000000);
-        shadow.x = element.physicsData.x;
-        shadow.y = element.physicsData.y;
-        shadows.push(shadow);
-
-        shadow = new Polygon([{x:0,y:0}, {x:0,y:element.physicsData.height}, {x:0,y:0},{x:0,y:0}], 0x000000);
-        shadow.x = element.physicsData.x + element.physicsData.width;
-        shadow.y = element.physicsData.y;
-        shadows.push(shadow);
-
-        shadow = new Polygon([{x:0,y:0}, {x:element.physicsData.width,y:0}, {x:0,y:0},{x:0,y:0}], 0x000000);
-        shadow.x = element.physicsData.x;
-        shadow.y = element.physicsData.y + element.physicsData.height;
-        shadows.push(shadow);
-
-        shadow = new Polygon([{x:0,y:0}, {x:0,y:element.physicsData.height}, {x:0,y:0},{x:0,y:0}], 0x000000);
-        shadow.x = element.physicsData.x;
-        shadow.y = element.physicsData.y;
-        shadows.push(shadow);
-
-        return {element:element, shadows:shadows};
-    }
-
-    private function updateShadow(centerX:Number, centerY:Number, shadow:Object):void{
-        var posX:Number = shadow.element.physicsData.x;
-        var posY:Number = shadow.element.physicsData.y;
-        shadow.shadows[0].vertexData.setPosition(2, posX+((posX + shadow.element.physicsData.width) - centerX)*100, posY+((posY + 0) - centerY)*100);
-        shadow.shadows[0].vertexData.setPosition(3, posX+((posX + 0) - centerX)*100, posY+((posY + 0) - centerY)*100);
-        shadow.shadows[1].vertexData.setPosition(2, posX+((posX + 0) - centerX)*100, posY+((posY + shadow.element.physicsData.height) - centerY)*100);
-        shadow.shadows[1].vertexData.setPosition(3, posX+((posX + 0) - centerX)*100, posY+((posY + 0) - centerY)*100);
-        shadow.shadows[2].vertexData.setPosition(2, posX+((posX + shadow.element.physicsData.width) - centerX)*100, posY+((posY + shadow.element.physicsData.height) - centerY)*100);
-        shadow.shadows[2].vertexData.setPosition(3, posX+((posX + 0) - centerX)*100, posY+((posY + shadow.element.physicsData.height) - centerY)*100);
-        shadow.shadows[3].vertexData.setPosition(2, posX+((posX + 0) - centerX)*100, posY+((posY + shadow.element.physicsData.height) - centerY)*100);
-        shadow.shadows[3].vertexData.setPosition(3, posX+((posX + 0) - centerX)*100, posY+((posY + 0) - centerY)*100);
-
-        var matrix:Matrix = new Matrix();
-        matrix.translate(shadow.shadows[0].x, shadow.shadows[0].y);
-        shadowTexture.draw(shadow.shadows[0], matrix);
-        matrix.translate(-shadow.shadows[0].x, -shadow.shadows[0].y);
-        matrix.translate(shadow.shadows[1].x, shadow.shadows[1].y);
-        shadowTexture.draw(shadow.shadows[1], matrix);
-        matrix.translate(-shadow.shadows[1].x, -shadow.shadows[1].y);
-        matrix.translate(shadow.shadows[2].x, shadow.shadows[2].y);
-        shadowTexture.draw(shadow.shadows[2], matrix);
-        matrix.translate(-shadow.shadows[2].x, -shadow.shadows[2].y);
-        matrix.translate(shadow.shadows[3].x, shadow.shadows[3].y);
-        shadowTexture.draw(shadow.shadows[3], matrix);
-    }
+    private var fog:Fog;
 
     public function Main() {
         addEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
 
+    }
+
+    private function createElement():Object{
+        return {view:null, physicsData:null, castsShadow:false};
     }
 
     private function onAddedToStage(e:Event):void{
@@ -98,33 +42,38 @@ public class Main extends Sprite {
         map.physicsData.height = 500;
         map.physicsData.container = true;
         physicsDatas.push(map.physicsData);
+        objects.push(map);
 
 
+        var crate:Object = createElement();
         crate.view = new Quad(50, 50, 0xffaa88);
         addChild(crate.view);
 
+        crate.castsShadow = true;
         crate.physicsData = new PhysicsData();
         crate.physicsData.width = 50;
         crate.physicsData.height = 50;
         crate.physicsData.x = 100;
         crate.physicsData.y = 100;
         physicsDatas.push(crate.physicsData);
+        objects.push(crate);
 
 
-        shadowTexture = new RenderTexture(stage.stageWidth, stage.stageHeight);
-
-
+        var crate2:Object = createElement();
         crate2.view = new Quad(50, 50, 0xffaa88);
         addChild(crate2.view);
 
+        crate2.castsShadow = true;
         crate2.physicsData = new PhysicsData();
         crate2.physicsData.width = 50;
         crate2.physicsData.height = 50;
         crate2.physicsData.x = 200;
         crate2.physicsData.y = 120;
         physicsDatas.push(crate2.physicsData);
+        objects.push(crate2);
 
 
+        char = createElement();
         char.view = new Quad(30, 30, 0x77ff11);
         addChild(char.view);
 
@@ -135,35 +84,33 @@ public class Main extends Sprite {
         char.physicsData.y = 200;
         char.physicsData.checkCollisions = true;
         physicsDatas.push(char.physicsData);
+        objects.push(char);
 
 
+        core = createElement();
         core.view = new Quad(20, 20, 0x3388ff);
         addChild(core.view);
 
+        core.castsShadow = true;
         core.physicsData = new PhysicsData();
         core.physicsData.width = 20;
         core.physicsData.height = 20;
         core.physicsData.x = 400;
         core.physicsData.y = 320;
         physicsDatas.push(core.physicsData);
+        objects.push(core);
 
-        shadows.push(createShadows(crate));
-        shadows.push(createShadows(crate2));
-        shadows.push(createShadows(core));
-
-        shadowImage = new Image(shadowTexture);
-        shadowImage.alpha = .1;
-        addChild(shadowImage);
-
+        fog = new Fog();
+        addChild(fog.init(stage));
+        for each(var object:Object in objects){
+            if(object.castsShadow){
+                fog.addElement(object);
+            }
+        }
     }
 
     private function onEnterFrame(e:Event):void{
-
-        shadowTexture.clear();
-        for each(var shadow:Object in shadows) {
-            updateShadow(char.physicsData.x, char.physicsData.y, shadow);
-            updateShadow(char.physicsData.x, char.physicsData.y, shadow);
-        }
+        fog.draw(char.physicsData.x, char.physicsData.y);
 
         char.physicsData.velX = 0;
         char.physicsData.velY = 0;
@@ -183,14 +130,10 @@ public class Main extends Sprite {
 
         updatePhysics(physicsDatas);
 
-        char.view.x = char.physicsData.x;
-        char.view.y = char.physicsData.y;
-        crate.view.x = crate.physicsData.x;
-        crate.view.y = crate.physicsData.y;
-        crate2.view.x = crate2.physicsData.x;
-        crate2.view.y = crate2.physicsData.y;
-        core.view.x = core.physicsData.x;
-        core.view.y = core.physicsData.y;
+        for each(var object:Object in objects){
+            object.view.x = object.physicsData.x;
+            object.view.y = object.physicsData.y;
+        }
         x = -char.view.x+stage.stageWidth/2;
         y = -char.view.y+stage.stageHeight/2;
 
