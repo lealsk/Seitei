@@ -24,7 +24,7 @@ public class Main extends Sprite {
     }
 
     private function createElement():Object{
-        return {view:null, physicsData:null, castsShadow:false};
+        return {view:{sprite:null, shadow:null}, physicsData:null, castsShadow:false};
     }
 
     private function onAddedToStage(e:Event):void{
@@ -33,9 +33,9 @@ public class Main extends Sprite {
         stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyPressed);
         stage.addEventListener(KeyboardEvent.KEY_UP, onKeyReleased);
 
-        var map:Object = {view:null, physicsData:null};
-        map.view = new Quad(700, 500, 0xbb8855);
-        addChild(map.view);
+        var map:Object = createElement();
+        map.view.sprite = new Quad(700, 500, 0xbb8855);
+        addChild(map.view.sprite);
 
         map.physicsData = new PhysicsData();
         map.physicsData.width = 700;
@@ -46,8 +46,8 @@ public class Main extends Sprite {
 
 
         var crate:Object = createElement();
-        crate.view = new Quad(50, 50, 0xffaa88);
-        addChild(crate.view);
+        crate.view.sprite = new Quad(50, 50, 0xffaa88);
+        addChild(crate.view.sprite);
 
         crate.castsShadow = true;
         crate.physicsData = new PhysicsData();
@@ -60,8 +60,8 @@ public class Main extends Sprite {
 
 
         var crate2:Object = createElement();
-        crate2.view = new Quad(50, 50, 0xffaa88);
-        addChild(crate2.view);
+        crate2.view.sprite = new Quad(50, 50, 0xffaa88);
+        addChild(crate2.view.sprite);
 
         crate2.castsShadow = true;
         crate2.physicsData = new PhysicsData();
@@ -74,8 +74,8 @@ public class Main extends Sprite {
 
 
         char = createElement();
-        char.view = new Quad(30, 30, 0x77ff11);
-        addChild(char.view);
+        char.view.sprite = new Quad(30, 30, 0x77ff11);
+        addChild(char.view.sprite);
 
         char.physicsData = new PhysicsData();
         char.physicsData.width = 30;
@@ -88,8 +88,8 @@ public class Main extends Sprite {
 
 
         core = createElement();
-        core.view = new Quad(20, 20, 0x3388ff);
-        addChild(core.view);
+        core.view.sprite = new Quad(20, 20, 0x3388ff);
+        addChild(core.view.sprite);
 
         core.castsShadow = true;
         core.physicsData = new PhysicsData();
@@ -110,10 +110,10 @@ public class Main extends Sprite {
     }
 
     private function onEnterFrame(e:Event):void{
-        fog.draw(char.physicsData.x, char.physicsData.y);
+        fog.draw(char.physicsData.x+char.physicsData.width/2, char.physicsData.y+char.physicsData.height/2);
 
-        char.physicsData.velX = 0;
-        char.physicsData.velY = 0;
+        updatePhysics(physicsDatas);
+
         var spd:Number = 3;
         if(pressedKeys[Keyboard.D]){
             char.physicsData.velX = spd;
@@ -128,14 +128,12 @@ public class Main extends Sprite {
             char.physicsData.velY = spd;
         }
 
-        updatePhysics(physicsDatas);
-
         for each(var object:Object in objects){
-            object.view.x = object.physicsData.x;
-            object.view.y = object.physicsData.y;
+            object.view.sprite.x = object.physicsData.x;
+            object.view.sprite.y = object.physicsData.y;
         }
-        x = -char.view.x+stage.stageWidth/2;
-        y = -char.view.y+stage.stageHeight/2;
+        x = -char.view.sprite.x+stage.stageWidth/2;
+        y = -char.view.sprite.y+stage.stageHeight/2;
 
         if(char.physicsData.colliding == core.physicsData){
             NativeApplication.nativeApplication.exit();
@@ -177,10 +175,14 @@ public class Main extends Sprite {
                             if(data.x + data.width > data2.x && data.x < data2.x + data2.width && data.y - data.velY + data.height > data2.y && data.y - data.velY < data2.y + data2.height ){
                                 data.colliding = data2;
                                 data.x -= data.velX;
+                                data2.velX = data.velX;
+                                //data2.checkCollisions = true;
                             }
                             if(data.x - data.velX + data.width > data2.x && data.x - data.velX < data2.x + data2.width && data.y + data.height > data2.y && data.y < data2.y + data2.height ){
                                 data.colliding = data2;
                                 data.y -= data.velY;
+                                data2.velY = data.velY;
+                                //data2.checkCollisions = true;
                             }
                             if (data.colliding) {
                                 break;
@@ -189,6 +191,10 @@ public class Main extends Sprite {
                     }
                 }
             }
+        }
+        for each(var data:PhysicsData in datas){
+            data.velX *= .8;
+            data.velY *= .8;
         }
     }
 }

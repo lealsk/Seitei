@@ -3,6 +3,7 @@
  */
 package {
 import flash.geom.Matrix;
+import flash.geom.Point;
 
 import starling.display.Image;
 import starling.display.Stage;
@@ -69,14 +70,50 @@ public class Fog {
     private function updateShadow(centerX:Number, centerY:Number, shadow:Object):void{
         var posX:Number = shadow.element.physicsData.x;
         var posY:Number = shadow.element.physicsData.y;
-        shadow.shadows[0].vertexData.setPosition(2, posX+((posX + shadow.element.physicsData.width) - centerX)*100, posY+((posY + 0) - centerY)*100);
-        shadow.shadows[0].vertexData.setPosition(3, posX+((posX + 0) - centerX)*100, posY+((posY + 0) - centerY)*100);
-        shadow.shadows[1].vertexData.setPosition(2, posX+((posX + 0) - centerX)*100, posY+((posY + shadow.element.physicsData.height) - centerY)*100);
-        shadow.shadows[1].vertexData.setPosition(3, posX+((posX + 0) - centerX)*100, posY+((posY + 0) - centerY)*100);
-        shadow.shadows[2].vertexData.setPosition(2, posX+((posX + shadow.element.physicsData.width) - centerX)*100, posY+((posY + shadow.element.physicsData.height) - centerY)*100);
-        shadow.shadows[2].vertexData.setPosition(3, posX+((posX + 0) - centerX)*100, posY+((posY + shadow.element.physicsData.height) - centerY)*100);
-        shadow.shadows[3].vertexData.setPosition(2, posX+((posX + 0) - centerX)*100, posY+((posY + shadow.element.physicsData.height) - centerY)*100);
-        shadow.shadows[3].vertexData.setPosition(3, posX+((posX + 0) - centerX)*100, posY+((posY + 0) - centerY)*100);
+        var w:Number = shadow.element.physicsData.width;
+        var h:Number = shadow.element.physicsData.height;
+        var dst:Number = 1000;
+        var p:Point;
+
+        //top
+        shadow.shadows[0].x = posX;
+        shadow.shadows[0].y = posY;
+        p = new Point(posX+w-centerX, posY-centerY);
+        p.normalize(dst);
+        shadow.shadows[0].vertexData.setPosition(2, p.x+w, p.y);
+        p = new Point(posX-centerX, posY-centerY);
+        p.normalize(dst);
+        shadow.shadows[0].vertexData.setPosition(3, p.x, p.y);
+
+        //right
+        shadow.shadows[1].x = posX+w;
+        shadow.shadows[1].y = posY;
+        p = new Point(posX+w-centerX, posY+h-centerY);
+        p.normalize(dst);
+        shadow.shadows[1].vertexData.setPosition(2, p.x, p.y+h);
+        p = new Point(posX+w-centerX, posY-centerY);
+        p.normalize(dst);
+        shadow.shadows[1].vertexData.setPosition(3, p.x, p.y);
+
+        //bottom
+        shadow.shadows[2].x = posX;
+        shadow.shadows[2].y = posY+h;
+        p = new Point(posX+w-centerX, posY+h-centerY);
+        p.normalize(dst);
+        shadow.shadows[2].vertexData.setPosition(2, p.x+w, p.y);
+        p = new Point(posX-centerX, posY+h-centerY);
+        p.normalize(dst);
+        shadow.shadows[2].vertexData.setPosition(3, p.x, p.y);
+
+        //left
+        shadow.shadows[3].x = posX;
+        shadow.shadows[3].y = posY;
+        p = new Point(posX-centerX, posY+h-centerY);
+        p.normalize(dst);
+        shadow.shadows[3].vertexData.setPosition(2, p.x, p.y+h);
+        p = new Point(posX-centerX, posY-centerY);
+        p.normalize(dst);
+        shadow.shadows[3].vertexData.setPosition(3, p.x, p.y);
 
         var matrix:Matrix = new Matrix();
         matrix.translate(shadow.shadows[0].x, shadow.shadows[0].y);
