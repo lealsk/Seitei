@@ -148,53 +148,57 @@ public class Main extends Sprite {
         pressedKeys[e.keyCode] = false;
     }
 
-    private function updatePhysics(datas:Array):void{
-        for each(var data:PhysicsData in datas){
-            data.x += data.velX;
-            data.y += data.velY;
-        }
-        for each(var data:PhysicsData in datas) {
-            if (data.checkCollisions) {
-                for each(var data2:PhysicsData in datas) {
-                    if(data2 != data) {
-                        data.colliding = null;
-                        if (data2.container) {
-                            if (data.x < data2.x || data.x + data.width > data2.x + data2.width) {
-                                data.colliding = data2;
-                                data.x -= data.velX;
-                            }
-                            if (data.y < data2.y || data.y + data.height > data2.y + data2.height) {
-                                data.colliding = data2;
-                                data.y -= data.velY;
-                            }
-                            if (data.colliding) {
-                                break;
-                            }
-                        } else {
+    private function checkCollisions(data:PhysicsData, datas:Array):void{
+        for each(var data2:PhysicsData in datas) {
+            if(data2 != data) {
+                data.colliding = null;
+                if (data2.container) {
+                    if (data.x + data.velX < data2.x || data.x + data.velX + data.width > data2.x + data2.width) {
+                        data.colliding = data2;
+                        data.velX = 0;
+                    }
+                    if (data.y + data.velY < data2.y || data.y + data.velY + data.height > data2.y + data2.height) {
+                        data.colliding = data2;
+                        data.velY = 0;
+                    }
+                    if (data.colliding) {
+                        break;
+                    }
+                } else {
 
-                            if(data.x + data.width > data2.x && data.x < data2.x + data2.width && data.y - data.velY + data.height > data2.y && data.y - data.velY < data2.y + data2.height ){
-                                data.colliding = data2;
-                                data.x -= data.velX;
-                                data2.velX = data.velX;
-                                //data2.checkCollisions = true;
-                            }
-                            if(data.x - data.velX + data.width > data2.x && data.x - data.velX < data2.x + data2.width && data.y + data.height > data2.y && data.y < data2.y + data2.height ){
-                                data.colliding = data2;
-                                data.y -= data.velY;
-                                data2.velY = data.velY;
-                                //data2.checkCollisions = true;
-                            }
-                            if (data.colliding) {
-                                break;
-                            }
-                        }
+                    if(data.x + data.velX + data.width > data2.x && data.x  + data.velX < data2.x + data2.width && data.y - data.velY + data.height > data2.y && data.y - data.velY < data2.y + data2.height ){
+                        data.colliding = data2;
+                        data2.velX = data.velX;
+                        data.velX = 0;
+                        checkCollisions(data2, datas);
+                    }
+                    if(data.x - data.velX + data.width > data2.x && data.x - data.velX < data2.x + data2.width && data.y + data.velY + data.height > data2.y && data.y + data.velY < data2.y + data2.height ){
+                        data.colliding = data2;
+                        data2.velY = data.velY;
+                        data.velY = 0;
+                        checkCollisions(data2, datas);
+                    }
+                    if (data.colliding) {
+                        break;
                     }
                 }
             }
         }
+    }
+
+    private function updatePhysics(datas:Array):void{
+        for each(var data:PhysicsData in datas) {
+            if (data.checkCollisions) {
+                checkCollisions(data, datas);
+            }
+        }
         for each(var data:PhysicsData in datas){
-            data.velX *= .8;
-            data.velY *= .8;
+            data.x += data.velX;
+            data.y += data.velY;
+        }
+        for each(var data:PhysicsData in datas){
+            data.velX = 0;
+            data.velY = 0;
         }
     }
 }
