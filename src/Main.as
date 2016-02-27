@@ -110,9 +110,9 @@ public class Main extends Sprite {
     }
 
     private function onEnterFrame(e:Event):void{
-        fog.draw(char.physicsData.x+char.physicsData.width/2, char.physicsData.y+char.physicsData.height/2);
 
         updatePhysics(physicsDatas);
+        fog.draw(char.physicsData.x+char.physicsData.width/2, char.physicsData.y+char.physicsData.height/2);
 
         var spd:Number = 3;
         if(pressedKeys[Keyboard.D]){
@@ -153,34 +153,40 @@ public class Main extends Sprite {
             if(data2 != data) {
                 data.colliding = null;
                 if (data2.container) {
+                    // Collision with walls
+                    //
                     if (data.x + data.velX < data2.x || data.x + data.velX + data.width > data2.x + data2.width) {
                         data.colliding = data2;
-                        data.velX = 0;
+                        data.velX = data.x + data.velX < data2.x ? data2.x - data.x : (data2.x + data2.width) - (data.x+data.width);
+
                     }
                     if (data.y + data.velY < data2.y || data.y + data.velY + data.height > data2.y + data2.height) {
                         data.colliding = data2;
-                        data.velY = 0;
+                        data.velY = data.y + data.velY < data2.y ? data2.y - data.y : (data2.y + data2.height) - (data.y+data.height);
                     }
-                    if (data.colliding) {
+                    /*if (data.colliding) {
                         break;
-                    }
+                    }*/
                 } else {
-
-                    if(data.x + data.velX + data.width > data2.x && data.x  + data.velX < data2.x + data2.width && data.y - data.velY + data.height > data2.y && data.y - data.velY < data2.y + data2.height ){
+                    // Collision with objects
+                    //
+                    if(data.x + data.velX + data.width > data2.x && data.x  + data.velX < data2.x + data2.width && data.y + data.height > data2.y && data.y < data2.y + data2.height ){
                         data.colliding = data2;
+                        //var vel:Number = data.x + data.width <= data2.x && data.x + data.width + data.velX > data2.x ? data2.x - (data.x + data.width) : (data2.x + data2.width) - data.x;
                         data2.velX = data.velX;
-                        data.velX = 0;
                         checkCollisions(data2, datas);
+                        data.velX = data2.velX;
                     }
-                    if(data.x - data.velX + data.width > data2.x && data.x - data.velX < data2.x + data2.width && data.y + data.velY + data.height > data2.y && data.y + data.velY < data2.y + data2.height ){
+                    if(data.x + data.width > data2.x && data.x < data2.x + data2.width && data.y + data.velY + data.height > data2.y && data.y + data.velY < data2.y + data2.height ){
                         data.colliding = data2;
+                        //var vel:Number = data.y + data.height <= data2.y && data.y + data.height + data.velY > data2.y ? data2.y - (data.y + data.height) : (data2.y + data2.height) - data.y;
                         data2.velY = data.velY;
-                        data.velY = 0;
                         checkCollisions(data2, datas);
+                        data.velY = data2.velY;
                     }
-                    if (data.colliding) {
+                    /*if (data.colliding) {
                         break;
-                    }
+                    }*/
                 }
             }
         }
