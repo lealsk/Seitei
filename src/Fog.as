@@ -4,6 +4,7 @@
 package {
 import flash.geom.Matrix;
 import flash.geom.Point;
+import flash.utils.Dictionary;
 
 import starling.display.Image;
 import starling.display.Stage;
@@ -11,7 +12,7 @@ import starling.textures.RenderTexture;
 
 public class Fog {
 
-    private var shadows:Array = [];
+    private var shadows:Dictionary = new Dictionary(true);
     private var shadowTexture:RenderTexture;
     private var shadowImage:Image;
 
@@ -37,7 +38,11 @@ public class Fog {
     }
 
     public function addElement(element:Object):void{
-        shadows.push(createShadows(element));
+        shadows[element] = createShadows(element);
+    }
+
+    public function removeElement(element:Object):void{
+        delete shadows[element];
     }
 
     private function createShadows(element:Object):Object{

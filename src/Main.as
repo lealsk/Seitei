@@ -4,6 +4,7 @@ import flash.desktop.NativeApplication;
 
 import starling.display.Quad;
 import starling.display.Sprite;
+import starling.events.EventDispatcher;
 import starling.events.KeyboardEvent;
 import flash.ui.Keyboard;
 
@@ -15,6 +16,7 @@ public class Main extends Sprite {
     private var char:Object = null;
     private var core:Object = null;
     private var physicsDatas:Array = new Array();
+    private var physicsDispatcher:EventDispatcher = new EventDispatcher();
 
     private var fog:Fog;
 
@@ -24,7 +26,7 @@ public class Main extends Sprite {
     }
 
     private function createElement():Object{
-        return {view:{sprite:null, shadow:null}, physicsData:null, castsShadow:false};
+        return {view:{sprite:null, shadow:null}, physicsData:null, castsShadow:false, hitPoints:100};
     }
 
     private function onAddedToStage(e:Event):void{
@@ -38,6 +40,7 @@ public class Main extends Sprite {
         addChild(map.view.sprite);
 
         map.physicsData = new PhysicsData();
+        map.physicsData.owner = map;
         map.physicsData.width = 700;
         map.physicsData.height = 500;
         map.physicsData.container = true;
@@ -51,6 +54,7 @@ public class Main extends Sprite {
 
         crate.castsShadow = true;
         crate.physicsData = new PhysicsData();
+        crate.physicsData.owner = crate;
         crate.physicsData.width = 50;
         crate.physicsData.height = 50;
         crate.physicsData.x = 100;
@@ -65,6 +69,7 @@ public class Main extends Sprite {
 
         crate2.castsShadow = true;
         crate2.physicsData = new PhysicsData();
+        crate2.physicsData.owner = crate2;
         crate2.physicsData.width = 50;
         crate2.physicsData.height = 50;
         crate2.physicsData.x = 200;
@@ -78,6 +83,7 @@ public class Main extends Sprite {
         addChild(char.view.sprite);
 
         char.physicsData = new PhysicsData();
+        char.physicsData.owner = char;
         char.physicsData.width = 30;
         char.physicsData.height = 30;
         char.physicsData.x = 200;
@@ -93,6 +99,7 @@ public class Main extends Sprite {
 
         core.castsShadow = true;
         core.physicsData = new PhysicsData();
+        core.physicsData.owner = core;
         core.physicsData.width = 20;
         core.physicsData.height = 20;
         core.physicsData.x = 400;
@@ -107,6 +114,7 @@ public class Main extends Sprite {
                 fog.addElement(object);
             }
         }
+        physicsDispatcher.addEventListener("collide", onCollide);
     }
 
     private function onEnterFrame(e:Event):void{
@@ -127,6 +135,31 @@ public class Main extends Sprite {
         if(pressedKeys[Keyboard.S]){
             char.physicsData.velY = spd;
         }
+        if(pressedKeys[Keyboard.SPACE]){
+            pressedKeys[Keyboard.SPACE] = false;
+
+            var bullet:Object = createElement();
+            bullet.view.sprite = new Quad(8, 8, 0xffaa88);
+            addChild(bullet.view.sprite);
+
+            bullet.physicsData = new PhysicsData();
+            bullet.physicsData.owner = bullet;
+            bullet.physicsData.width = 6;
+            bullet.physicsData.height = 6;
+            var dst:Number = 30;
+            var px:Number = char.physicsData.x + char.physicsData.width / 2;
+            var py:Number = char.physicsData.y + char.physicsData.height / 2;
+            bullet.physicsData.x = px + Math.cos(char.physicsData.direction) * dst;
+            bullet.physicsData.y = py + Math.sin(char.physicsData.direction) * dst;
+            bullet.physicsData.z = 10;
+            var spd:Number = 6;
+            bullet.physicsData.velX = Math.cos(char.physicsData.direction) * spd;
+            bullet.physicsData.velY = Math.sin(char.physicsData.direction) * spd;
+
+            bullet.physicsData.checkCollisions = true;
+            physicsDatas.push(bullet.physicsData);
+            objects.push(bullet);
+        }
 
         for each(var object:Object in objects){
             object.view.sprite.x = object.physicsData.x;
@@ -137,6 +170,30 @@ public class Main extends Sprite {
 
         if(char.physicsData.colliding == core.physicsData){
             NativeApplication.nativeApplication.exit();
+        }
+    }
+
+    private function removeElement(element:Object):void{
+        physicsDatas.splice(physicsDatas.indexOf(element.physicsData, 0), 1);
+        if(element.castsShadow){
+            fog.removeElement(element);
+        }
+        if(element.view.sprite.parent){
+            element.view.sprite.parent.removeChild(element.view.sprite);
+        }
+    }
+
+    private function onCollide(e:Event, data:Object):void{
+        // TODO Add a property to indicate damage on collision
+        if(data.z > 0) {
+            var target:Object = data.owner.physicsData.colliding.owner;
+            target.hitPoints -= 10;
+            removeElement(data.owner);
+            if(!target.physicsData.container) {
+                if (target.hitPoints <= 0) {
+                    removeElement(target);
+                }
+            }
         }
     }
 
@@ -164,9 +221,9 @@ public class Main extends Sprite {
                         data.colliding = data2;
                         data.velY = data.y + data.velY < data2.y ? data2.y - data.y : (data2.y + data2.height) - (data.y+data.height);
                     }
-                    /*if (data.colliding) {
-                        break;
-                    }*/
+                    if (data.colliding) {
+                        physicsDispatcher.dispatchEventWith("collide", false, data);
+                    }
                 } else {
                     // Collision with objects
                     //
@@ -184,9 +241,9 @@ public class Main extends Sprite {
                         checkCollisions(data2, datas);
                         data.velY = data2.velY;
                     }
-                    /*if (data.colliding) {
-                        break;
-                    }*/
+                    if(data.colliding){
+                        physicsDispatcher.dispatchEventWith("collide", false, data);
+                    }
                 }
             }
         }
@@ -201,10 +258,15 @@ public class Main extends Sprite {
         for each(var data:PhysicsData in datas){
             data.x += data.velX;
             data.y += data.velY;
+            if(data.velX != 0 || data.velY != 0) {
+                data.direction = Math.atan2(data.velY, data.velX);
+            }
         }
         for each(var data:PhysicsData in datas){
-            data.velX = 0;
-            data.velY = 0;
+            if(data.z <= 0) {
+                data.velX = 0;
+                data.velY = 0;
+            }
         }
     }
 }
