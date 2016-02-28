@@ -207,7 +207,7 @@ public class Main extends Sprite {
 
     private function checkCollisions(data:PhysicsData, datas:Array):void{
         for each(var data2:PhysicsData in datas) {
-            if(data2 != data) {
+            if(data2 != data && data2.colliding != data) {
                 data.colliding = null;
                 if (data2.container) {
                     // Collision with walls
