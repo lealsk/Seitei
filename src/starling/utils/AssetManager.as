@@ -1,13 +1,3 @@
-// =================================================================================================
-//
-//	Starling Framework
-//	Copyright 2011-2015 Gamua. All Rights Reserved.
-//
-//	This program is free software. You can redistribute and/or modify it
-//	in accordance with the terms of the accompanying license agreement.
-//
-// =================================================================================================
-
 package starling.utils
 {
     import flash.display.Bitmap;
@@ -645,7 +635,7 @@ package starling.utils
                     if (assetCount > 0) loadNextQueueElement();
                     else                processXmls();
                 };
-
+                
                 processRawAsset(assetInfo.name, assetInfo.asset, assetInfo.options,
                     xmls, onElementProgress, onElementLoaded);
             }
@@ -815,17 +805,10 @@ package starling.utils
                         mNumLostTextures++;
                         loadRawAsset(rawAsset, null, function(asset:Object):void
                         {
-                            try
-                            {
-                                if (asset == null) throw new Error("Reload failed");
-                                texture.root.uploadBitmap(asset as Bitmap);
-                                asset.bitmapData.dispose();
-                            }
-                            catch (e:Error)
-                            {
-                                log("Texture restoration failed for '" + name + "': " + e.message);
-                            }
-
+                            try { texture.root.uploadBitmap(asset as Bitmap); }
+                            catch (e:Error) { log("Texture restoration failed: " + e.message); }
+                            
+                            asset.bitmapData.dispose();
                             mNumRestoredTextures++;
                             
                             if (mNumLostTextures == mNumRestoredTextures)
@@ -843,29 +826,17 @@ package starling.utils
                     
                     if (AtfData.isAtfData(bytes))
                     {
-                        options.onReady = prependCallback(options.onReady, function():void
-                        {
-                            addTexture(name, texture);
-                            onComplete();
-                        });
-
+                        options.onReady = prependCallback(options.onReady, onComplete);
                         texture = Texture.fromData(bytes, options);
                         texture.root.onRestore = function():void
                         {
                             mNumLostTextures++;
                             loadRawAsset(rawAsset, null, function(asset:Object):void
                             {
-                                try
-                                {
-                                    if (asset == null) throw new Error("Reload failed");
-                                    texture.root.uploadAtfData(asset as ByteArray, 0, true);
-                                    asset.clear();
-                                }
-                                catch (e:Error)
-                                {
-                                    log("Texture restoration failed for '" + name + "': " + e.message);
-                                }
+                                try { texture.root.uploadAtfData(asset as ByteArray, 0, true); }
+                                catch (e:Error) { log("Texture restoration failed: " + e.message); }
                                 
+                                asset.clear();
                                 mNumRestoredTextures++;
                                 
                                 if (mNumLostTextures == mNumRestoredTextures)
@@ -874,6 +845,7 @@ package starling.utils
                         };
                         
                         bytes.clear();
+                        addTexture(name, texture);
                     }
                     else if (byteArrayStartsWith(bytes, "{") || byteArrayStartsWith(bytes, "["))
                     {

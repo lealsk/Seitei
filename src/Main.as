@@ -1,14 +1,22 @@
 package {
 
 import flash.desktop.NativeApplication;
-
-import starling.display.Quad;
-import starling.display.Sprite;
-import starling.events.EventDispatcher;
-import starling.events.KeyboardEvent;
 import flash.ui.Keyboard;
 
+import starling.display.Image;
+import starling.display.Quad;
+import starling.display.Sprite;
 import starling.events.Event;
+import starling.events.EventDispatcher;
+import starling.events.KeyboardEvent;
+import starling.events.Touch;
+import starling.events.TouchEvent;
+import starling.events.TouchPhase;
+import starling.extensions.deferredShading.display.DeferredShadingContainer;
+import starling.extensions.deferredShading.lights.AmbientLight;
+import starling.extensions.deferredShading.lights.Light;
+import starling.extensions.deferredShading.lights.SpotLight;
+import starling.textures.Texture;
 
 public class Main extends Sprite {
     private var pressedKeys:Array = new Array(300);
@@ -17,8 +25,10 @@ public class Main extends Sprite {
     private var core:Object = null;
     private var physicsDatas:Array = new Array();
     private var physicsDispatcher:EventDispatcher = new EventDispatcher();
-
-    private var fog:Fog;
+    private var controlledLight:SpotLight;
+    private var container:DeferredShadingContainer;
+    [Embed (source="assets/face_diffuse.png")]
+    public static const CHAR_DIFF:Class;
 
     public function Main() {
         addEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
@@ -34,10 +44,15 @@ public class Main extends Sprite {
         stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
         stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyPressed);
         stage.addEventListener(KeyboardEvent.KEY_UP, onKeyReleased);
+        stage.addEventListener(TouchEvent.TOUCH, onTouch);
+
+        addChild(container = new DeferredShadingContainer());
+
+        var texture:Texture = Texture.fromEmbeddedAsset(CHAR_DIFF);
 
         var map:Object = createElement();
         map.view.sprite = new Quad(700, 500, 0xbb8855);
-        addChild(map.view.sprite);
+        container.addChild(map.view.sprite);
 
         map.physicsData = new PhysicsData();
         map.physicsData.owner = map;
@@ -49,38 +64,52 @@ public class Main extends Sprite {
 
 
         var crate:Object = createElement();
-        crate.view.sprite = new Quad(50, 50, 0xffaa88);
-        addChild(crate.view.sprite);
 
         crate.castsShadow = true;
         crate.physicsData = new PhysicsData();
         crate.physicsData.owner = crate;
-        crate.physicsData.width = 50;
+        crate.physicsData.width = 200;
         crate.physicsData.height = 50;
         crate.physicsData.x = 100;
         crate.physicsData.y = 100;
         physicsDatas.push(crate.physicsData);
         objects.push(crate);
 
+        var img:Image = new Image(texture);
+        img.width = crate.physicsData.width;
+        img.height = crate.physicsData.height;
+        var spr:Sprite = new Sprite();
+        spr.addChild(img);
+        crate.view.sprite = spr;
+        container.addChild(crate.view.sprite);
+        container.addOccluder(crate.view.sprite);
+
 
         var crate2:Object = createElement();
-        crate2.view.sprite = new Quad(50, 50, 0xffaa88);
-        addChild(crate2.view.sprite);
 
         crate2.castsShadow = true;
         crate2.physicsData = new PhysicsData();
         crate2.physicsData.owner = crate2;
-        crate2.physicsData.width = 50;
+        crate2.physicsData.width = 200;
         crate2.physicsData.height = 50;
-        crate2.physicsData.x = 200;
+        crate2.physicsData.x = 400;
         crate2.physicsData.y = 120;
         physicsDatas.push(crate2.physicsData);
         objects.push(crate2);
 
+        var img:Image = new Image(texture);
+        img.width = crate2.physicsData.width;
+        img.height = crate2.physicsData.height;
+        var spr:Sprite = new Sprite();
+        spr.addChild(img);
+        crate2.view.sprite = spr;
+        container.addChild(crate2.view.sprite);
+        container.addOccluder(crate2.view.sprite);
+
 
         char = createElement();
         char.view.sprite = new Quad(30, 30, 0x77ff11);
-        addChild(char.view.sprite);
+        container.addChild(char.view.sprite);
 
         char.physicsData = new PhysicsData();
         char.physicsData.owner = char;
@@ -94,33 +123,43 @@ public class Main extends Sprite {
 
 
         core = createElement();
-        core.view.sprite = new Quad(20, 20, 0x3388ff);
-        addChild(core.view.sprite);
 
         core.castsShadow = true;
         core.physicsData = new PhysicsData();
         core.physicsData.owner = core;
-        core.physicsData.width = 20;
+        core.physicsData.width = 80;
         core.physicsData.height = 20;
         core.physicsData.x = 400;
         core.physicsData.y = 320;
         physicsDatas.push(core.physicsData);
         objects.push(core);
 
-        fog = new Fog();
-        addChild(fog.init(stage));
-        for each(var object:Object in objects){
-            if(object.castsShadow){
-                fog.addElement(object);
-            }
-        }
+        var img:Image = new Image(texture);
+        img.width = core.physicsData.width;
+        img.height = core.physicsData.height;
+        var spr:Sprite = new Sprite();
+        spr.addChild(img);
+        core.view.sprite = spr;
+        container.addChild(core.view.sprite);
+        container.addOccluder(core.view.sprite);
+
+        var p:SpotLight = new SpotLight(0xFFFFFFFF, .15, 1000,0);
+        p.castsShadows = true;
+        container.addChild(p);
+        p.angle = Math.PI*.8;
+        //p.attenuation = 15.0;
+        controlledLight = p;
+
+        var ambient:AmbientLight = new AmbientLight(0xffffff);
+        container.addChild(ambient);
+
         physicsDispatcher.addEventListener("collide", onCollide);
     }
 
     private function onEnterFrame(e:Event):void{
 
+
         updatePhysics(physicsDatas);
-        fog.draw(char.physicsData.x+char.physicsData.width/2, char.physicsData.y+char.physicsData.height/2);
 
         var spd:Number = 3;
         if(pressedKeys[Keyboard.D]){
@@ -135,31 +174,6 @@ public class Main extends Sprite {
         if(pressedKeys[Keyboard.S]){
             char.physicsData.velY = spd;
         }
-        if(pressedKeys[Keyboard.SPACE]){
-            pressedKeys[Keyboard.SPACE] = false;
-
-            var bullet:Object = createElement();
-            bullet.view.sprite = new Quad(8, 8, 0xffaa88);
-            addChild(bullet.view.sprite);
-
-            bullet.physicsData = new PhysicsData();
-            bullet.physicsData.owner = bullet;
-            bullet.physicsData.width = 6;
-            bullet.physicsData.height = 6;
-            var dst:Number = 30;
-            var px:Number = char.physicsData.x + char.physicsData.width / 2;
-            var py:Number = char.physicsData.y + char.physicsData.height / 2;
-            bullet.physicsData.x = px + Math.cos(char.physicsData.direction) * dst;
-            bullet.physicsData.y = py + Math.sin(char.physicsData.direction) * dst;
-            bullet.physicsData.z = 10;
-            var spd:Number = 6;
-            bullet.physicsData.velX = Math.cos(char.physicsData.direction) * spd;
-            bullet.physicsData.velY = Math.sin(char.physicsData.direction) * spd;
-
-            bullet.physicsData.checkCollisions = true;
-            physicsDatas.push(bullet.physicsData);
-            objects.push(bullet);
-        }
 
         for each(var object:Object in objects){
             object.view.sprite.x = object.physicsData.x;
@@ -167,6 +181,9 @@ public class Main extends Sprite {
         }
         x = -char.view.sprite.x+stage.stageWidth/2;
         y = -char.view.sprite.y+stage.stageHeight/2;
+        var l:Light = controlledLight as Light;
+        l.x = char.view.sprite.x + char.physicsData.width/2;
+        l.y = char.view.sprite.y + char.physicsData.height/2;
 
         if(char.physicsData.colliding == core.physicsData){
             NativeApplication.nativeApplication.exit();
@@ -175,9 +192,6 @@ public class Main extends Sprite {
 
     private function removeElement(element:Object):void{
         physicsDatas.splice(physicsDatas.indexOf(element.physicsData, 0), 1);
-        if(element.castsShadow){
-            fog.removeElement(element);
-        }
         if(element.view.sprite.parent){
             element.view.sprite.parent.removeChild(element.view.sprite);
         }
@@ -203,6 +217,44 @@ public class Main extends Sprite {
 
     private function onKeyReleased(e:KeyboardEvent):void{
         pressedKeys[e.keyCode] = false;
+    }
+
+    private function onTouch(e:TouchEvent):void{
+        var touch:Touch = e.getTouch(this);
+        if(!touch) {
+            return;
+        }
+        if(touch.phase == TouchPhase.BEGAN){
+
+
+            var bullet:Object = createElement();
+            bullet.view.sprite = new Quad(8, 8, 0xffaa88);
+            container.addChild(bullet.view.sprite);
+
+            bullet.physicsData = new PhysicsData();
+            bullet.physicsData.owner = bullet;
+            bullet.physicsData.width = 6;
+            bullet.physicsData.height = 6;
+            var dst:Number = 30;
+            var px:Number = char.physicsData.x + char.physicsData.width / 2;
+            var py:Number = char.physicsData.y + char.physicsData.height / 2;
+
+            var rotation:Number = controlledLight.rotation + Math.PI * .4;
+
+            bullet.physicsData.x = px + Math.cos(rotation) * dst;
+            bullet.physicsData.y = py + Math.sin(rotation) * dst;
+            bullet.physicsData.z = 10;
+            var spd:Number = 6;
+            bullet.physicsData.velX = Math.cos(rotation) * spd;
+            bullet.physicsData.velY = Math.sin(rotation) * spd;
+
+            bullet.physicsData.checkCollisions = true;
+            physicsDatas.push(bullet.physicsData);
+            objects.push(bullet);
+
+        }
+        var l:SpotLight = controlledLight as SpotLight;
+        l.rotation = Math.atan2(touch.globalY-(l.y+y), touch.globalX-(l.x+x))-Math.PI*.4;
     }
 
     private function checkCollisions(data:PhysicsData, datas:Array):void{
