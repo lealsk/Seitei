@@ -11,6 +11,7 @@ import starling.events.EventDispatcher;
 import starling.events.KeyboardEvent;
 import starling.events.Touch;
 import starling.events.TouchEvent;
+import starling.events.TouchPhase;
 import starling.extensions.deferredShading.display.DeferredShadingContainer;
 import starling.extensions.deferredShading.lights.AmbientLight;
 import starling.extensions.deferredShading.lights.Light;
@@ -173,34 +174,6 @@ public class Main extends Sprite {
         if(pressedKeys[Keyboard.S]){
             char.physicsData.velY = spd;
         }
-        if(pressedKeys[Keyboard.SPACE]){
-            pressedKeys[Keyboard.SPACE] = false;
-
-            var bullet:Object = createElement();
-            bullet.view.sprite = new Quad(8, 8, 0xffaa88);
-            container.addChild(bullet.view.sprite);
-
-            bullet.physicsData = new PhysicsData();
-            bullet.physicsData.owner = bullet;
-            bullet.physicsData.width = 6;
-            bullet.physicsData.height = 6;
-            var dst:Number = 30;
-            var px:Number = char.physicsData.x + char.physicsData.width / 2;
-            var py:Number = char.physicsData.y + char.physicsData.height / 2;
-
-            var rotation:Number = controlledLight.rotation + Math.PI * .4;
-
-            bullet.physicsData.x = px + Math.cos(rotation) * dst;
-            bullet.physicsData.y = py + Math.sin(rotation) * dst;
-            bullet.physicsData.z = 10;
-            var spd:Number = 6;
-            bullet.physicsData.velX = Math.cos(rotation) * spd;
-            bullet.physicsData.velY = Math.sin(rotation) * spd;
-
-            bullet.physicsData.checkCollisions = true;
-            physicsDatas.push(bullet.physicsData);
-            objects.push(bullet);
-        }
 
         for each(var object:Object in objects){
             object.view.sprite.x = object.physicsData.x;
@@ -250,6 +223,35 @@ public class Main extends Sprite {
         var touch:Touch = e.getTouch(this);
         if(!touch) {
             return;
+        }
+        if(touch.phase == TouchPhase.BEGAN){
+
+
+            var bullet:Object = createElement();
+            bullet.view.sprite = new Quad(8, 8, 0xffaa88);
+            container.addChild(bullet.view.sprite);
+
+            bullet.physicsData = new PhysicsData();
+            bullet.physicsData.owner = bullet;
+            bullet.physicsData.width = 6;
+            bullet.physicsData.height = 6;
+            var dst:Number = 30;
+            var px:Number = char.physicsData.x + char.physicsData.width / 2;
+            var py:Number = char.physicsData.y + char.physicsData.height / 2;
+
+            var rotation:Number = controlledLight.rotation + Math.PI * .4;
+
+            bullet.physicsData.x = px + Math.cos(rotation) * dst;
+            bullet.physicsData.y = py + Math.sin(rotation) * dst;
+            bullet.physicsData.z = 10;
+            var spd:Number = 6;
+            bullet.physicsData.velX = Math.cos(rotation) * spd;
+            bullet.physicsData.velY = Math.sin(rotation) * spd;
+
+            bullet.physicsData.checkCollisions = true;
+            physicsDatas.push(bullet.physicsData);
+            objects.push(bullet);
+
         }
         var l:SpotLight = controlledLight as SpotLight;
         l.rotation = Math.atan2(touch.globalY-(l.y+y), touch.globalX-(l.x+x))-Math.PI*.4;
