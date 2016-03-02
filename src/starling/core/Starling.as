@@ -42,6 +42,7 @@ package starling.core
 
     import starling.animation.Juggler;
     import starling.display.DisplayObject;
+    import starling.display.QuadBatch;
     import starling.display.Stage;
     import starling.events.EventDispatcher;
     import starling.events.ResizeEvent;
@@ -60,10 +61,6 @@ package starling.core
     
     /** Dispatched when a fatal error is encountered. The 'data' property contains an error string. */
     [Event(name="fatalError", type="starling.events.Event")]
-
-    /** Dispatched when the display list is about to be rendered. This event provides the last
-     *  opportunity to make changes before the display list is rendered. */
-    [Event(name="render", type="starling.events.Event")]
 
     /** The Starling class represents the core of the Starling framework.
      *
@@ -185,7 +182,7 @@ package starling.core
     public class Starling extends EventDispatcher
     {
         /** The version of the Starling framework. */
-        public static const VERSION:String = "1.7";
+        public static const VERSION:String = "1.6.1";
         
         /** The key for the shader programs stored in 'contextData' */
         private static const PROGRAM_DATA_NAME:String = "Starling.programs"; 
@@ -253,7 +250,8 @@ package starling.core
          */
         public function Starling(rootClass:Class, stage:flash.display.Stage, 
                                  viewPort:Rectangle=null, stage3D:Stage3D=null,
-                                 renderMode:String="auto", profile:Object="baselineConstrained")
+                                 renderMode:String="auto", profile:Object="baselineConstrained",
+								 quadBatchClass:Class = null)
         {
             if (stage == null) throw new ArgumentError("Stage must not be null");
             if (viewPort == null) viewPort = new Rectangle(0, 0, stage.stageWidth, stage.stageHeight);
@@ -279,6 +277,7 @@ package starling.core
             mEnableErrorChecking = false;
             mSupportHighResolutions = false;
             mLastFrameTimestamp = getTimer() / 1000.0;
+			mQuadBatchClass = quadBatchClass ? quadBatchClass : QuadBatch;
             mSupport  = new RenderSupport();
             
             // for context data, we actually reference by stage3D, since it survives a context loss
@@ -464,7 +463,7 @@ package starling.core
         }
         
         /** Calls <code>advanceTime()</code> (with the time that has passed since the last frame)
-         *  and <code>render()</code>. */
+         *  and <code>render()</code>. */ 
         public function nextFrame():void
         {
             var now:Number = getTimer() / 1000.0;
@@ -473,9 +472,6 @@ package starling.core
             
             // to avoid overloading time-based animations, the maximum delta is truncated.
             if (passedTime > 1.0) passedTime = 1.0;
-
-            // after about 25 days, 'getTimer()' will roll over. A rare event, but still ...
-            if (passedTime < 0.0) passedTime = 1.0 / mNativeStage.frameRate;
 
             advanceTime(passedTime);
             render();
@@ -496,11 +492,7 @@ package starling.core
         }
         
         /** Renders the complete display list. Before rendering, the context is cleared; afterwards,
-         *  it is presented (to avoid this, enable <code>shareContext</code>).
-         *
-         *  <p>This method also dispatches an <code>Event.RENDER</code>-event on the Starling
-         *  instance. That's the last opportunity to make changes before the display list is
-         *  rendered.</p> */
+         *  it is presented. This can be avoided by enabling <code>shareContext</code>.*/ 
         public function render():void
         {
             if (!contextValid)
@@ -508,16 +500,15 @@ package starling.core
             
             makeCurrent();
             updateViewPort();
-            dispatchEventWith(starling.events.Event.RENDER);
-
+            mSupport.nextFrame();
+            
             var scaleX:Number = mViewPort.width  / mStage.stageWidth;
             var scaleY:Number = mViewPort.height / mStage.stageHeight;
             
             mContext.setDepthTest(false, Context3DCompareMode.ALWAYS);
             mContext.setCulling(Context3DTriangleFace.NONE);
-
-            mSupport.nextFrame();
-            mSupport.stencilReferenceValue = 0;
+            mContext.setStencilReferenceValue(0);
+            
             mSupport.renderTarget = null; // back buffer
             mSupport.setProjectionMatrix(
                 mViewPort.x < 0 ? -mViewPort.x / scaleX : 0.0,
@@ -813,7 +804,7 @@ package starling.core
             mTouchProcessor.enqueue(touchID, phase, globalX, globalY, pressure, width, height);
             
             // allow objects that depend on mouse-over state to be updated immediately
-            if (event.type == MouseEvent.MOUSE_UP && Mouse.supportsCursor)
+            if (event.type == MouseEvent.MOUSE_UP)
                 mTouchProcessor.enqueue(touchID, TouchPhase.HOVER, globalX, globalY);
         }
         
@@ -1101,15 +1092,11 @@ package starling.core
         }
         
         /** Indicates if the Context3D object is currently valid (i.e. it hasn't been lost or
-         *  disposed). */
+         *  disposed). Beware that each call to this method causes a String allocation (due to
+         *  internal code Starling can't avoid), so do not call this method too often. */
         public function get contextValid():Boolean
         {
-            if (mContext)
-            {
-                const driverInfo:String = mContext.driverInfo;
-                return driverInfo != null && driverInfo != "" && driverInfo != "Disposed";
-            }
-            else return false;
+            return mContext && mContext.driverInfo != "Disposed";
         }
 
         // static properties
@@ -1176,5 +1163,14 @@ package starling.core
             else
                 sHandleLostContext = value;
         }
+		
+		// Deferred renderer additions
+		
+		private var mQuadBatchClass:Class;
+		
+		public function createQuadBatch():QuadBatch
+		{
+			return new mQuadBatchClass();
+		}
     }
 }

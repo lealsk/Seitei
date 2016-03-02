@@ -10,10 +10,10 @@
 
 package starling.geom
 {
-    import flash.geom.Point;
-    import flash.utils.getQualifiedClassName;
+    import avmplus.getQualifiedClassName;
 
-    import starling.utils.VectorUtil;
+    import flash.geom.Point;
+
     import starling.utils.VertexData;
 
     /** A polygon describes a closed two-dimensional shape bounded by a number of straight
@@ -27,9 +27,6 @@ package starling.geom
     public class Polygon
     {
         private var mCoords:Vector.<Number>;
-
-        // Helper object
-        private static var sRestIndices:Vector.<uint> = new <uint>[];
 
         /** Creates a Polygon with the given coordinates.
          *  @param vertices an array that contains either 'Point' instances or
@@ -168,15 +165,16 @@ package starling.geom
             if (result == null) result = new <uint>[];
 
             var numVertices:int = this.numVertices;
-            var i:int, restIndexPos:int, numRestIndices:int, resultPos:int;
+            var i:int, restIndexPos:int, numRestIndices:int;
 
             if (numVertices < 3) return result;
 
-            sRestIndices.length = numVertices;
-            for (i=0; i<numVertices; ++i) sRestIndices[i] = i;
+            var restIndices:Vector.<uint> = new Vector.<uint>(numVertices);
+
+            for (i=0; i<numVertices; ++i)
+                restIndices[i] = i;
 
             restIndexPos = 0;
-            resultPos = result.length;
             numRestIndices = numVertices;
 
             while (numRestIndices > 3)
@@ -186,9 +184,9 @@ package starling.geom
                 // We remove those ears until only one remains -> each ear is one of our wanted
                 // triangles.
 
-                var i0:uint = sRestIndices[ restIndexPos      % numRestIndices];
-                var i1:uint = sRestIndices[(restIndexPos + 1) % numRestIndices];
-                var i2:uint = sRestIndices[(restIndexPos + 2) % numRestIndices];
+                var i0:int = restIndices[ restIndexPos      % numRestIndices];
+                var i1:int = restIndices[(restIndexPos + 1) % numRestIndices];
+                var i2:int = restIndices[(restIndexPos + 2) % numRestIndices];
 
                 var ax:Number = mCoords[2 * i0];
                 var ay:Number = mCoords[2 * i0 + 1];
@@ -203,7 +201,7 @@ package starling.geom
                     earFound = true;
                     for (i = 3; i < numRestIndices; ++i)
                     {
-                        var otherIndex:uint = sRestIndices[(restIndexPos + i) % numRestIndices];
+                        var otherIndex:int = restIndices[(restIndexPos + i) % numRestIndices];
                         if (isPointInTriangle(mCoords[2 * otherIndex], mCoords[2 * otherIndex + 1],
                                 ax, ay, bx, by, cx, cy))
                         {
@@ -215,11 +213,8 @@ package starling.geom
 
                 if (earFound)
                 {
-                    result[resultPos++] = i0; // -> result.push(i0, i1, i2);
-                    result[resultPos++] = i1;
-                    result[resultPos++] = i2;
-                    VectorUtil.removeUnsignedIntAt(sRestIndices, (restIndexPos + 1) % numRestIndices);
-
+                    result.push(i0, i1, i2);
+                    restIndices.splice((restIndexPos + 1) % numRestIndices, 1);
                     numRestIndices--;
                     restIndexPos = 0;
                 }
@@ -230,10 +225,7 @@ package starling.geom
                 }
             }
 
-            result[resultPos++] = sRestIndices[0]; // -> result.push(...);
-            result[resultPos++] = sRestIndices[1];
-            result[resultPos  ] = sRestIndices[2];
-
+            result.push(restIndices[0], restIndices[1], restIndices[2]);
             return result;
         }
 
@@ -273,9 +265,9 @@ package starling.geom
             for (var i:int=0; i<numPoints; ++i)
             {
                 result += "  [Vertex " + i + ": " +
-                    "x=" + mCoords[i * 2    ].toFixed(1) + ", " +
-                    "y=" + mCoords[i * 2 + 1].toFixed(1) + "]"  +
-                    (i == numPoints - 1 ? "\n" : ",\n");
+                "x="   + mCoords[i * 2    ].toFixed(1) + ", " +
+                "y="   + mCoords[i * 2 + 1].toFixed(1) + "]"  +
+                (i == numPoints - 1 ? "\n" : ",\n");
             }
 
             return result + "]";
@@ -462,8 +454,9 @@ package starling.geom
     }
 }
 
+import avmplus.getQualifiedClassName;
+
 import flash.errors.IllegalOperationError;
-import flash.utils.getQualifiedClassName;
 
 import starling.geom.Polygon;
 
@@ -551,14 +544,9 @@ class Ellipse extends ImmutablePolygon
 
         var from:uint = 1;
         var to:uint = numVertices - 1;
-        var pos:uint = result.length;
 
         for (var i:int=from; i<to; ++i)
-        {
-            result[pos++] = 0;
-            result[pos++] = i;
-            result[pos++] = i + 1;
-        }
+            result.push(0, i, i+1);
 
         return result;
     }

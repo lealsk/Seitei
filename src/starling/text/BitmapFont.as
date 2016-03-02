@@ -236,10 +236,10 @@ package starling.text
                                       fontSize:Number=-1, color:uint=0xffffff, 
                                       hAlign:String="center", vAlign:String="center",      
                                       autoScale:Boolean=true, 
-                                      kerning:Boolean=true, leading:Number=0):void
+                                      kerning:Boolean=true):void
         {
-            var charLocations:Vector.<CharLocation> = arrangeChars(
-                    width, height, text, fontSize, hAlign, vAlign, autoScale, kerning, leading);
+            var charLocations:Vector.<CharLocation> = arrangeChars(width, height, text, fontSize, 
+                                                                   hAlign, vAlign, autoScale, kerning);
             var numChars:int = charLocations.length;
             mHelperImage.color = color;
             
@@ -261,8 +261,7 @@ package starling.text
          *  Returns a Vector of CharLocations. */
         private function arrangeChars(width:Number, height:Number, text:String, fontSize:Number=-1,
                                       hAlign:String="center", vAlign:String="center",
-                                      autoScale:Boolean=true, kerning:Boolean=true,
-                                      leading:Number=0):Vector.<CharLocation>
+                                      autoScale:Boolean=true, kerning:Boolean=true):Vector.<CharLocation>
         {
             if (text == null || text.length == 0) return CharLocation.vectorFromPool();
             if (fontSize < 0) fontSize *= -mSize;
@@ -352,11 +351,11 @@ package starling.text
                             if (lastWhiteSpace == i)
                                 currentLine.pop();
                             
-                            if (currentY + leading + 2 * mLineHeight <= containerHeight)
+                            if (currentY + 2*mLineHeight <= containerHeight)
                             {
                                 currentLine = CharLocation.vectorFromPool();
                                 currentX = 0;
-                                currentY += mLineHeight + leading;
+                                currentY += mLineHeight;
                                 lastWhiteSpace = -1;
                                 lastCharID = -1;
                             }
