@@ -11,12 +11,14 @@ package starling.extensions.deferredShading.display
 	import flash.display3D.Context3DVertexBufferFormat;
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.VertexBuffer3D;
-	import flash.geom.Rectangle;
+import flash.geom.Matrix;
+import flash.geom.Rectangle;
 	
 	import starling.core.RenderSupport;
 	import starling.core.Starling;
 	import starling.display.DisplayObject;
-	import starling.display.Quad;
+import starling.display.DisplayObjectContainer;
+import starling.display.Quad;
 	import starling.display.Sprite;
 	import starling.events.Event;
 	import starling.extensions.deferredShading.RenderPass;
@@ -26,7 +28,8 @@ package starling.extensions.deferredShading.display
 	import starling.extensions.deferredShading.lights.AmbientLight;
 	import starling.extensions.deferredShading.lights.Light;
 	import starling.extensions.utils.ShaderUtils;
-	import starling.textures.Texture;
+import starling.textures.RenderTexture;
+import starling.textures.Texture;
 	import starling.utils.Color;
 	
 	use namespace renderer_internal;
@@ -72,6 +75,7 @@ package starling.extensions.deferredShading.display
 		// Render targets for shadows
 		
 		public var occludersRT:Texture;
+		public var hiddenRT:RenderTexture;
 		
 		// Lights
 		
@@ -85,6 +89,9 @@ package starling.extensions.deferredShading.display
 		// Shadows
 		
 		private var occluders:Vector.<DisplayObject> = new Vector.<DisplayObject>();
+
+		//TODO Improve hidden objects code/naming
+		private var hidden:Array = new Array();
 		private var shadowMapRect:Rectangle = new Rectangle();		
 		
 		// Misc		
@@ -145,7 +152,7 @@ package starling.extensions.deferredShading.display
 			
 			return super.removeChildAt(index, dispose);
 		}
-		
+
 		/**
 		 * Adds occluder. Only occluders added this way will cast shadows.
 		 */
@@ -153,13 +160,28 @@ package starling.extensions.deferredShading.display
 		{
 			occluders.push(occluder);
 		}
-		
+
 		/**
 		 * Removes occluder, so it won`t cast shadows anymore.
 		 */
 		public function removeOccluder(occluder:DisplayObject):void
 		{
 			occluders.splice(occluders.indexOf(occluder), 1);
+		}
+
+		public function addHidden(object:DisplayObject, parent:DisplayObjectContainer):void
+		{
+			hidden.push({object:object, parent:parent});
+		}
+
+		public function removeHidden(object:DisplayObject):void
+		{
+			for each(var obj:Object in hidden){
+				if(obj.object == object){
+					hidden.splice(hidden.indexOf(obj, 0), 1);
+					break;
+				}
+			}
 		}
 		
 		public override function dispose():void
@@ -170,6 +192,7 @@ package starling.extensions.deferredShading.display
 			normalsRT.dispose();
 			depthRT.dispose();
 			occludersRT.dispose();
+			hiddenRT.dispose();
 			
 			overlayVertexBuffer.dispose();
 			overlayIndexBuffer.dispose();
@@ -202,6 +225,7 @@ package starling.extensions.deferredShading.display
 			normalsRT = Texture.empty(w, h, false, false, true, -1, Context3DTextureFormat.RGBA_HALF_FLOAT);
 			depthRT = Texture.empty(w, h, false, false, true, -1, Context3DTextureFormat.RGBA_HALF_FLOAT);
 			occludersRT = Texture.empty(w, h, false, false, true, -1, Context3DTextureFormat.BGRA);
+			hiddenRT = new RenderTexture(w, h, true);
 			
 			MRTPassRenderTargets = new Vector.<Texture>();
 			MRTPassRenderTargets.push(diffuseRT, normalsRT, depthRT);
@@ -403,7 +427,7 @@ package starling.extensions.deferredShading.display
 						q.color = Color.WHITE;
 					}
 				}
-			}		
+			}
 			
 			support.popMatrix();
 			
@@ -412,7 +436,7 @@ package starling.extensions.deferredShading.display
 			----------------------------------*/
 			
 			renderPass = RenderPass.SHADOWMAP;
-			
+
 			for each(l in visibleLights)
 			{		
 				var shadowMappedLight:IShadowMappedLight = l as IShadowMappedLight;
@@ -420,8 +444,8 @@ package starling.extensions.deferredShading.display
 				if(!shadowMappedLight || (shadowMappedLight && !shadowMappedLight.castsShadows))
 				{
 					continue;
-				}			
-				
+				}
+
 				tmpRenderTargets.length = 0;
 				tmpRenderTargets.push(shadowMappedLight.shadowMap, null, null);					
 				support.setRenderTargets(tmpRenderTargets, 0, true);
@@ -444,7 +468,22 @@ package starling.extensions.deferredShading.display
 			----------------------------------*/
 			
 			support.setRenderTargets(prevRenderTargets);
-			
+
+
+			// !!! CUSTOM
+			hiddenRT.clear();
+			for each(var object:Object in hidden)
+			{
+				var o:DisplayObject = object.object;
+				var mat:Matrix = new Matrix();
+				mat.scale(parent.scaleX, parent.scaleY);
+				mat.translate(parent.x, parent.y);
+				mat.scale(o.scaleX, o.scaleY);
+				mat.translate(o.x, o.y);
+				hiddenRT.draw(o, mat);
+			}
+
+
 			if(lights.length)
 			{				
 				renderPass = RenderPass.LIGHTS;		
@@ -459,7 +498,7 @@ package starling.extensions.deferredShading.display
 				{
 					ambientLight = DEFAULT_AMBIENT;
 				}
-				
+
 				support.clear(0x000000, 1.0);
 				context.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ONE);
 				support.pushMatrix();
@@ -484,7 +523,7 @@ package starling.extensions.deferredShading.display
 				context.setTextureAt(1, depthRT.base);
 				
 				// Render other lights
-				
+
 				for each(l in visibleLights)
 				{
 					var areaLight:IAreaLight = l as IAreaLight;
@@ -496,6 +535,7 @@ package starling.extensions.deferredShading.display
 						{
 							context.setTextureAt(2, shadowMappedLight.shadowMap.base);
 							context.setTextureAt(3, occludersRT.base);
+							context.setTextureAt(5, hiddenRT.base);
 						}						
 						
 						support.loadIdentity();
@@ -521,6 +561,7 @@ package starling.extensions.deferredShading.display
 						{
 							context.setTextureAt(2, null);
 							context.setTextureAt(3, null);
+							context.setTextureAt(5, null);
 						}
 					}
 				}
