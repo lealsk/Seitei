@@ -567,9 +567,45 @@ package starling.extensions.deferredShading.lights
 						
 						// Multiply result by light intensity coef
 						'mul ft2.xyz, ft2.xyz, ft7.x',
-						
+
+
+						// Sample hidden objects texture
+						'tex ft3, ft0.xy, fs5 <2d, clamp, linear, mipnone>',
+
+						// Create alpha mask
+						'mul ft7.x, ft2.x, fc0.z',
+						'mul ft7.x, ft7.x, fc0.z',
+						'mul ft7.x, ft7.x, fc0.z',
+
+						// Limit alpha mask
+						'min ft7.x, ft7.x, fc0.y',
+
+						// Apply mask
+						'mul ft3.w, ft3.w, ft7.x',
+
+						// Add ambient light
+						'add ft2.xyz, ft2.xyz, fc0.xxx',
+
+						// Set maximum light value of 1,1,1
+						'min ft2.xyz, ft2.xyz, fc0.yyy',
+
 						// light * diffuseRT
 						'mul ft2.xyz, ft2.xyz, ft1.xyz',
+
+						// alpha blending => sourceColor*sourceAlpha + destColor*(1-sourceAlpha)
+						// first mul
+						'mul ft5.xyz, ft3.xyz, ft3.www',
+						'mov ft5.w, ft3.w',
+						// sub
+						'sub ft6.w, fc0.y, ft3.w',
+						// second mul
+						'mul ft2.xyz, ft2.xyz, ft6.www',
+						'mul ft2.w, ft2.w, ft6.w',
+						// add
+						'add ft2.xyz, ft2.xyz, ft5.xyz',
+						'add ft2.w, ft2.w, ft5.w',
+
+						// Output color
 						'mov oc, ft2',
 					]
 				);
@@ -865,30 +901,30 @@ package starling.extensions.deferredShading.lights
 			var edge:Number = (2 * radius) / (1 + Math.sqrt(2));
 			excircleRadius = edge / 2 * (Math.sqrt( 4 + 2 * Math.sqrt(2) ));
 		}
-		
+
 		private function setupVertices():void
 		{
 			var i:int;
-			
+
 			// Create vertices		
 			vertexData = new VertexData(mNumEdges+1);
-			
+
 			for(i = 0; i < mNumEdges; ++i)
 			{
 				var edge:Point = Point.polar(excircleRadius, _angle * (i / (mNumEdges - 1)));
 				vertexData.setPosition(i, edge.x, edge.y);
 			}
-			
+
 			// Center vertex
 			vertexData.setPosition(mNumEdges, 0.0, 0.0);
-			
-			// Create indices that span up the triangles			
+
+			// Create indices that span up the triangles
 			indexData = new <uint>[];
-			
+
 			for(i = 0; i < mNumEdges; ++i)
 			{
 				indexData.push(mNumEdges, i, i + 1);
-			}		
+			}
 		}
 		
 		private function createBuffers():void

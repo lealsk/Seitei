@@ -132,8 +132,8 @@ package starling.extensions.deferredShading.lights
 			support.finishQuadBatch();
 			
 			// make this call to keep the statistics display in sync.
-			support.raiseDrawCount();		
-			
+			support.raiseDrawCount();
+
 			sRenderAlpha[0] = sRenderAlpha[1] = sRenderAlpha[2] = 1.0;
 			sRenderAlpha[3] = alpha * this.alpha;
 			
@@ -144,7 +144,7 @@ package starling.extensions.deferredShading.lights
 			// support.applyBlendMode(false);
 			
 			// Set constants
-			
+
 			position.setTo(0, 0);
 			localToGlobal(position, position);
 			
@@ -174,7 +174,7 @@ package starling.extensions.deferredShading.lights
 			screenDimensions[0] = stage.stageWidth;
 			screenDimensions[1] = stage.stageHeight;
 			
-			// Activate program (shader) and set the required buffers / constants 
+			// Activate program (shader) and set the required buffers / constants
 			
 			context.setProgram(Starling.current.getProgram(_castsShadows ? POINT_LIGHT_PROGRAM_WITH_SHADOWS : POINT_LIGHT_PROGRAM));
 			context.setVertexBufferAt(0, vertexBuffer, VertexData.POSITION_OFFSET, Context3DVertexBufferFormat.FLOAT_2); 
@@ -194,9 +194,9 @@ package starling.extensions.deferredShading.lights
 				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 8, atan2Constants, 2);
 				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 10, constants2, 1);
 				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 11, blurConstants, 3);
-			}			
-			
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 14, screenDimensions, 1);			
+			}
+
+			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 14, screenDimensions, 1);
 			context.drawTriangles(indexBuffer, 0, mNumEdges);
 			
 			context.setVertexBufferAt(0, null);
@@ -325,20 +325,20 @@ package starling.extensions.deferredShading.lights
 						'sub ft0.y, fc0.y, ft0.y',
 						
 						// Sample normals to ft1
-						
+
 						'tex ft1, ft0.xy, fs0 <2d, clamp, linear, mipnone>',
 						'sub ft1.y, fc0.y, ft1.y ', // y-axis should increase downwards
 						
 						// Then unpack normals from [0, 1] to [-1, 1]
 						// by multiplying by 2 and then subtracting 1
-						
+
 						'mul ft1.xyz, ft1.xyz, fc0.zzz',
 						'sub ft1.xyz, ft1.xyz, fc0.yyy',
-						
+
 						'nrm ft1.xyz, ft1.xyz',
 						
 						// Sample depth to ft2 
-						
+
 						'tex ft2, ft0.xy, fs1 <2d, clamp, linear, mipnone>',
 						
 						// Put specular power and specular intensity to ft0.zw
@@ -377,7 +377,7 @@ package starling.extensions.deferredShading.lights
 						// float amount = max(dot(normal, lightDirNorm), 0);
 						// Put it in ft5.x
 						'dp3 ft5.x, ft1.xyz, ft7.xyz',
-						'max ft5.x, ft5.x, fc0.w',							
+						'max ft5.x, ft5.x, fc0.w',
 						
 						/*-----------------------
 						Calculate attenuation
@@ -421,7 +421,7 @@ package starling.extensions.deferredShading.lights
 						'mul ft7.x, ft5.y, ft5.z',
 						'mul ft7.x, ft7.x, ft0.w',
 						'mov ft6.w, ft7.x',
-						
+
 						'<shadows>',
 						
 						// Multiply diffuse color by calculated light amounts
@@ -430,14 +430,68 @@ package starling.extensions.deferredShading.lights
 						
 						// light = (specular * lightColor + diffuseLight) * lightStrength
 						'mul ft2.xyz, ft6.www, fc3.xyz,',
+
+
 						'add ft2.xyz, ft2.xyz, ft6.xyz',
 						'mul ft2.xyz, ft2.xyz, fc2.yyy ',
 						'mov ft2.w, fc0.y',
-						
-						// light * diffuseRT
+
+
+						// Set maximum light value of 1,1,1
+						'min ft2.xyz, ft2.xyz, fc0.yyy',
+
+						// Sample hidden objects texture
+						'tex ft3, ft0.xy, fs5 <2d, clamp, linear, mipnone>',
+
+						// Hide objects
+						'mul ft3.w, ft3.w, ft2.x',
+
+						// Add ambient light
+						'add ft2.xyz, ft2.xyz, fc0.xxx',
+
+						// Set maximum light value of 1,1,1
+						'min ft2.xyz, ft2.xyz, fc0.yyy',
+
+						// light * diffuseRT (draw scene)
 						'mul ft2.xyz, ft2.xyz, ft1.xyz',
-						
-						'mov oc, ft2'
+
+
+						//final = sourceColor*sourceAlpha + destColor*(1-sourceAlpha)
+						//sourceColor => ft3.wxyz
+						//sourceAlpha => ft3.wwww
+						//destColor   => ft2.wxyz
+						//1-sourceAlpha  fc0.yyyy - ft3.wxyz
+/*
+						'min ft7.x, ft3.w',
+						'mov ft7.yz, fc10.yy',
+						'nrm ft7.xyz, ft7.xyz',*/
+
+						// first mul
+						'mul ft5.xyz, ft3.xyz, ft3.www',
+						'mov ft5.w, ft3.w',
+						//'min ft3.xyz, ft3.xyz, fc0.yyy',
+
+						//'mul ft5.x, ft3.x, ft3.w',
+						//'mul ft5.w, ft3.w, ft3.w',
+
+						// sub
+						//'mov ft6.xyz, fc10.yyy',
+						'sub ft6.w, fc0.y, ft3.w',
+
+						// second mul
+						'mul ft2.xyz, ft2.xyz, ft6.www',
+						'mul ft2.w, ft2.w, ft6.w',
+
+
+						//'mov ft2.xyz, fc0.yyy',
+						//'mov ft2.w, fc10.y',
+
+						// add
+						'add ft2.xyz, ft2.xyz, ft5.xyz',
+						'add ft2.w, ft2.w, ft5.w',
+
+
+						'mov oc, ft2',
 					]
 				);
 			
@@ -548,7 +602,7 @@ package starling.extensions.deferredShading.lights
 						'mul ft13.x, ft13.x, fc11.w',
 						'add ft12.x, ft12.x, ft13.x',
 						// sum += center * 0.16;
-						'tex ft14, ft9.xy, fs2 <2d, clamp, linear, nomip>',							
+						'tex ft14, ft9.xy, fs2 <2d, clamp, linear, nomip>',
 						'sge ft13.x, ft20.x, ft14.x',
 						'mul ft13.x, ft13.x, fc13.x',
 						'add ft12.x, ft12.x, ft13.x',
@@ -594,7 +648,7 @@ package starling.extensions.deferredShading.lights
 						
 						// Draw shadow everywhere except pixels that overlap occluders						
 						'sub ft10.x, fc0.y, ft10.x',
-						'add ft12.x, ft12.x, ft10.x',						
+						'add ft12.x, ft12.x, ft10.x',
 						'mul ft6, ft6, ft12.x'
 					]
 				);
