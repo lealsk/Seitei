@@ -437,11 +437,22 @@ package starling.extensions.deferredShading.lights
 						'mov ft2.w, fc0.y',
 
 
+						// Set maximum light value of 1,1,1
+						'min ft2.xyz, ft2.xyz, fc0.yyy',
+
+						// Sample hidden objects texture
 						'tex ft3, ft0.xy, fs5 <2d, clamp, linear, mipnone>',
+
+						// Hide objects
 						'mul ft3.w, ft3.w, ft2.x',
 
+						// Add ambient light
+						'add ft2.xyz, ft2.xyz, fc0.xxx',
 
-						// light * diffuseRT
+						// Set maximum light value of 1,1,1
+						'min ft2.xyz, ft2.xyz, fc0.yyy',
+
+						// light * diffuseRT (draw scene)
 						'mul ft2.xyz, ft2.xyz, ft1.xyz',
 
 
@@ -450,17 +461,30 @@ package starling.extensions.deferredShading.lights
 						//sourceAlpha => ft3.wwww
 						//destColor   => ft2.wxyz
 						//1-sourceAlpha  fc0.yyyy - ft3.wxyz
+/*
+						'min ft7.x, ft3.w',
+						'mov ft7.yz, fc10.yy',
+						'nrm ft7.xyz, ft7.xyz',*/
 
 						// first mul
 						'mul ft5.xyz, ft3.xyz, ft3.www',
-						'mul ft5.w, ft3.w, ft3.w',
+						'mov ft5.w, ft3.w',
+						//'min ft3.xyz, ft3.xyz, fc0.yyy',
+
+						//'mul ft5.x, ft3.x, ft3.w',
+						//'mul ft5.w, ft3.w, ft3.w',
 
 						// sub
-						'mov ft6.xyz, fc0.yyy',
+						//'mov ft6.xyz, fc10.yyy',
 						'sub ft6.w, fc0.y, ft3.w',
 
 						// second mul
+						'mul ft2.xyz, ft2.xyz, ft6.www',
 						'mul ft2.w, ft2.w, ft6.w',
+
+
+						//'mov ft2.xyz, fc0.yyy',
+						//'mov ft2.w, fc10.y',
 
 						// add
 						'add ft2.xyz, ft2.xyz, ft5.xyz',

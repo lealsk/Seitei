@@ -29,7 +29,7 @@ public class Main extends Sprite {
     private var core:Object = null;
     private var physicsDatas:Array = new Array();
     private var physicsDispatcher:EventDispatcher = new EventDispatcher();
-    private var controlledLight:PointLight;
+    private var controlledLight:SpotLight;
     private var container:DeferredShadingContainer;
 
     //TODO Create assets class
@@ -174,14 +174,12 @@ public class Main extends Sprite {
         container.addChild(core.view.sprite);
         container.addOccluder(core.view.sprite);
 
-        var p:PointLight = new PointLight(0xFFFFFFFF, 1, 800,0);
-        p.castsShadows = true;
-        container.addChild(p);
-        p.attenuation = 1;
-        p.strength = .3;
-        controlledLight = p;
+        controlledLight = new SpotLight(0xFFFFFFFF, .2, 800,0);
+        controlledLight.castsShadows = true;
+        controlledLight.angle = Math.PI*.8;
+        container.addChild(controlledLight);
 
-        var ambient:AmbientLight = new AmbientLight(0xaaaaaa);
+        var ambient:AmbientLight = new AmbientLight(0x000000);
         container.addChild(ambient);
 
         physicsDispatcher.addEventListener("collide", onCollide);
@@ -258,7 +256,6 @@ public class Main extends Sprite {
         if(!touch) {
             return;
         }
-        var l:PointLight = controlledLight as PointLight;
         if(touch.phase == TouchPhase.BEGAN){
 
             var bullet:Object = createElement();
@@ -274,7 +271,7 @@ public class Main extends Sprite {
             var py:Number = char.physicsData.y + char.physicsData.height / 2;
 
 
-            var rotation:Number = Math.atan2(touch.globalY-(l.y+y), touch.globalX-(l.x+x));
+            var rotation:Number = Math.atan2(touch.globalY-(controlledLight.y+y), touch.globalX-(controlledLight.x+x));
 
             bullet.physicsData.x = px + Math.cos(rotation) * dst;
             bullet.physicsData.y = py + Math.sin(rotation) * dst;
@@ -288,9 +285,8 @@ public class Main extends Sprite {
             objects.push(bullet);
 
         }
-        //TODO Reactivate SpotLight
-        //var l:SpotLight = controlledLight as SpotLight;
-        //l.rotation = Math.atan2(touch.globalY-(l.y+y), touch.globalX-(l.x+x))-Math.PI*.4;
+        var l:SpotLight = controlledLight as SpotLight;
+        l.rotation = Math.atan2(touch.globalY-(l.y+y), touch.globalX-(l.x+x))-Math.PI*.4;
     }
 
     private function checkCollisions(data:PhysicsData, datas:Array):void{

@@ -61,7 +61,7 @@ import starling.textures.Texture;
 		
 		// Program constants
 		
-		private var ambient:Vector.<Number> = new <Number>[0.0, 0.0, 0.0, 1.0];
+		private var ambient:Vector.<Number> = new <Number>[0.5, 0.0, 0.0, 1.0];
 		
 		public static var renderPass:String = RenderPass.NORMAL;
 		
@@ -275,7 +275,8 @@ import starling.textures.Texture;
 					[						
 						'tex ft1, v0.xy, fs4 <2d, clamp, linear, mipnone>',
 						'mov ft1.w, fc0.w',
-						'mul oc, ft1, fc0',
+						'mul ft1.xyz, ft1.xyz, fc0.xxx',
+						'mov oc, ft1',
 					]
 				);
 			
@@ -500,14 +501,14 @@ import starling.textures.Texture;
 				}
 
 				support.clear(0x000000, 1.0);
-				context.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ONE);
+				context.setBlendFactors(Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA);
 				support.pushMatrix();
 				
 				// Render ambient light as full-screen quad
-				
-				ambient[0] = ambientLight._colorR;
+
+				/*ambient[0] = ambientLight._colorR;
 				ambient[1] = ambientLight._colorG;
-				ambient[2] = ambientLight._colorB;
+				ambient[2] = ambientLight._colorB;*/
 				
 				context.setVertexBufferAt(0, overlayVertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
 				context.setVertexBufferAt(1, overlayVertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_2);
