@@ -1,8 +1,15 @@
 package {
 
 import flash.desktop.NativeApplication;
+import flash.display.StageDisplayState;
+import flash.geom.Point;
 import flash.geom.Rectangle;
+import flash.system.Capabilities;
 import flash.ui.Keyboard;
+
+import starling.core.Starling;
+
+import starling.display.Image;
 
 import starling.display.Image;
 import starling.display.Quad;
@@ -16,11 +23,11 @@ import starling.events.TouchPhase;
 import starling.extensions.deferredShading.display.DeferredShadingContainer;
 import starling.extensions.deferredShading.lights.AmbientLight;
 import starling.extensions.deferredShading.lights.Light;
-import starling.extensions.deferredShading.lights.PointLight;
 import starling.extensions.deferredShading.lights.SpotLight;
 import starling.textures.Texture;
-import starling.textures.Texture;
 import starling.textures.TextureAtlas;
+import starling.utils.RectangleUtil;
+import starling.utils.ScaleMode;
 
 public class Main extends Sprite {
     private var pressedKeys:Array = new Array(300);
@@ -31,10 +38,17 @@ public class Main extends Sprite {
     private var physicsDispatcher:EventDispatcher = new EventDispatcher();
     private var controlledLight:SpotLight;
     private var container:DeferredShadingContainer;
+    private var destructibleTerrain:DestructibleTerrain;
 
     //TODO Create assets class
     [Embed (source="assets/face_diffuse.png")]
     public static const CHAR_DIFF:Class;
+    [Embed (source="assets/break.png")]
+    public static const BREAK:Class;
+    private var breakTexture:Texture = Texture.fromBitmap(new BREAK, false);
+    [Embed (source="assets/test_terrain.png")]
+    public static const TEST_TERRAIN:Class;
+    private var testTerrainTexture:Texture = Texture.fromBitmap(new TEST_TERRAIN, false);
     [Embed (source="assets/test_sprites.png")]
     public static const TEST_SPRITES:Class;
     private var testSpritesAtlas:TextureAtlas = new TextureAtlas(Texture.fromBitmap(new TEST_SPRITES(), false));
@@ -48,10 +62,22 @@ public class Main extends Sprite {
         return {view:{sprite:null, shadow:null}, physicsData:null, castsShadow:false, hidden:false, hitPoints:100};
     }
 
+    private function onResize(event:Event, size:Point):void
+    {
+        RectangleUtil.fit(
+                new Rectangle(0, 0, stage.stageWidth, stage.stageHeight),
+                new Rectangle(0, 0, size.x, size.y),
+                ScaleMode.SHOW_ALL, false,
+                Starling.current.viewPort
+        );
+    }
+
     private function onAddedToStage(e:Event):void{
         //TODO Move to assets class
         testSpritesAtlas.addRegion('enemy1', new Rectangle(637,5,128,245));
 
+
+        stage.addEventListener(Event.RESIZE, onResize);
         removeEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
         stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
         stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyPressed);
@@ -73,7 +99,7 @@ public class Main extends Sprite {
         map.physicsData.container = true;
         physicsDatas.push(map.physicsData);
         objects.push(map);
-
+/*
         var crate:Object = createElement();
         crate.castsShadow = true;
         crate.physicsData = new PhysicsData();
@@ -92,7 +118,7 @@ public class Main extends Sprite {
         spr.addChild(img);
         crate.view.sprite = spr;
         container.addChild(crate.view.sprite);
-        container.addOccluder(crate.view.sprite);
+        container.addOccluder(crate.view.sprite);*/
 
 
         var enemy:Object = createElement();
@@ -115,7 +141,7 @@ public class Main extends Sprite {
         enemy.view.sprite = spr;
         container.addHidden(enemy.view.sprite, container);
 
-
+/*
         var crate2:Object = createElement();
 
         crate2.castsShadow = true;
@@ -135,7 +161,7 @@ public class Main extends Sprite {
         spr.addChild(img);
         crate2.view.sprite = spr;
         container.addChild(crate2.view.sprite);
-        container.addOccluder(crate2.view.sprite);
+        container.addOccluder(crate2.view.sprite);*/
 
 
         char = createElement();
@@ -174,6 +200,10 @@ public class Main extends Sprite {
         container.addChild(core.view.sprite);
         container.addOccluder(core.view.sprite);
 
+        destructibleTerrain = new DestructibleTerrain();
+        destructibleTerrain.init(testTerrainTexture);
+        container.setDestructibleTerrain(destructibleTerrain);
+
         controlledLight = new SpotLight(0xFFFFFFFF, .2, 800,0);
         controlledLight.castsShadows = true;
         controlledLight.angle = Math.PI*.8;
@@ -188,6 +218,8 @@ public class Main extends Sprite {
     private function onEnterFrame(e:Event):void{
 
         updatePhysics(physicsDatas);
+
+        //addBreakage(Math.random()*stage.stageWidth, Math.random()*stage.stageHeight);
 
         var spd:Number = 3;
         if(pressedKeys[Keyboard.D]){
@@ -245,6 +277,11 @@ public class Main extends Sprite {
 
     private function onKeyPressed(e:KeyboardEvent):void{
         pressedKeys[e.keyCode] = true;
+        if(e.keyCode == Keyboard.F){
+            /*Starling.current.nativeStage.fullScreenSourceRect = new Rectangle(0,0,1024,600);
+            Starling.current.nativeStage.displayState = StageDisplayState.FULL_SCREEN_INTERACTIVE;
+            stage.dispatchEventWith(Event.RESIZE, false, new Point(Capabilities.screenResolutionX, Capabilities.screenResolutionY));*/
+        }
     }
 
     private function onKeyReleased(e:KeyboardEvent):void{
@@ -284,9 +321,23 @@ public class Main extends Sprite {
             physicsDatas.push(bullet.physicsData);
             objects.push(bullet);
 
+
+        }
+
+        if(touch.phase == TouchPhase.MOVED){
+            //TODO Move code elsewhere
+            addBreakage(touch.globalX, touch.globalY);
         }
         var l:SpotLight = controlledLight as SpotLight;
         l.rotation = Math.atan2(touch.globalY-(l.y+y), touch.globalX-(l.x+x))-Math.PI*.4;
+    }
+
+    private function addBreakage(x:Number, y:Number):void{
+        var breakage:Image = new Image(breakTexture);
+        breakage.x = x - breakage.width/2;
+        breakage.y = y - breakage.height/2;
+        destructibleTerrain.addBreakage(breakage);
+
     }
 
     private function checkCollisions(data:PhysicsData, datas:Array):void{

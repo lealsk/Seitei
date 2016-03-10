@@ -3,6 +3,7 @@ package
 import flash.display.Sprite;
 import flash.display.Stage3D;
 import flash.display.StageAlign;
+import flash.display.StageDisplayState;
 import flash.display.StageScaleMode;
 import flash.display3D.Context3DProfile;
 import flash.display3D.Context3DRenderMode;
@@ -12,7 +13,7 @@ import flash.geom.Rectangle;
 import starling.core.Starling;
 import starling.extensions.deferredShading.display.QuadBatchPlus;
 
-[SWF(width="1024", height="600", frameRate="60", backgroundColor="#222222")]
+[SWF(width="1024", height="600", frameRate="60", backgroundColor="#888888")]
 public class Startup extends Sprite
 {
     private var _starling:Starling;
