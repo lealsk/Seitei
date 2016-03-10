@@ -2,11 +2,15 @@ package {
 
 import flash.desktop.NativeApplication;
 import flash.filesystem.File;
+import flash.display.StageDisplayState;
+import flash.geom.Point;
 import flash.geom.Rectangle;
+import flash.system.Capabilities;
 import flash.ui.Keyboard;
 
 import starling.core.Starling;
 
+import starling.display.Image;
 import starling.display.Image;
 import starling.display.Quad;
 import starling.display.Sprite;
@@ -36,11 +40,18 @@ public class Main extends Sprite {
     private var _container:DeferredShadingContainer;
     private var _mouseX:int;
     private var _mouseY:int;
+    private var destructibleTerrain:DestructibleTerrain;
 
     private var _assets:AssetManager;
 
     //camera moves the main container, where the action happens, UI, HUD and other components of the game go in a different container.
     private var _mainContainer:Sprite;
+    [Embed (source="assets/break.png")]
+    public static const BREAK:Class;
+    private var breakTexture:Texture = Texture.fromBitmap(new BREAK, false);
+    [Embed (source="assets/test_terrain.png")]
+    public static const TEST_TERRAIN:Class;
+    private var testTerrainTexture:Texture = Texture.fromBitmap(new TEST_TERRAIN, false);
 
     public function Main() {
 
@@ -144,7 +155,6 @@ public class Main extends Sprite {
         enemy.view.sprite = spr;
         _container.addHidden(enemy.view.sprite, this);
 
-
         var crate2:Object = createElement();
 
         crate2.castsShadow = true;
@@ -207,6 +217,9 @@ public class Main extends Sprite {
         _controlledLight.castsShadows = true;
         _controlledLight.angle = Math.PI*.8;
         _container.addChild(_controlledLight);
+        destructibleTerrain = new DestructibleTerrain();
+        destructibleTerrain.init(testTerrainTexture);
+        _container.setDestructibleTerrain(destructibleTerrain);
 
         var ambient:AmbientLight = new AmbientLight(0x000000);
         _container.addChild(ambient);
@@ -217,6 +230,8 @@ public class Main extends Sprite {
     private function onEnterFrame(e:Event):void{
 
         updatePhysics(_physicsDatas);
+
+        //addBreakage(Math.random()*stage.stageWidth, Math.random()*stage.stageHeight);
 
         var spd:Number = 3;
         if(_pressedKeys[Keyboard.D]){
@@ -327,7 +342,21 @@ public class Main extends Sprite {
             var light:SpotLight = _controlledLight as SpotLight;
             light.rotation = Math.atan2(hover.globalY-(light.y + y), hover.globalX - (light.x + x)) - Math.PI * 0.4;
 
+
         }
+
+        if(touch && touch.phase == TouchPhase.MOVED){
+            //TODO Move code elsewhere
+            addBreakage(touch.globalX, touch.globalY);
+        }
+
+    }
+
+    private function addBreakage(x:Number, y:Number):void{
+        var breakage:Image = new Image(breakTexture);
+        breakage.x = x - breakage.width/2;
+        breakage.y = y - breakage.height/2;
+        destructibleTerrain.addBreakage(breakage);
 
     }
 
