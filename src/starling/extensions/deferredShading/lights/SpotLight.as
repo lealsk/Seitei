@@ -15,7 +15,8 @@ package starling.extensions.deferredShading.lights
 	import starling.core.RenderSupport;
 	import starling.core.Starling;
 	import starling.display.DisplayObject;
-	import starling.errors.MissingContextError;
+import starling.display.Image;
+import starling.errors.MissingContextError;
 	import starling.events.Event;
 	import starling.extensions.deferredShading.RenderPass;
 	import starling.extensions.deferredShading.renderer_internal;
@@ -57,6 +58,7 @@ package starling.extensions.deferredShading.lights
 		// Lightmap
 		
 		private static var constants:Vector.<Number> = new <Number>[0.5, 1.0, 2.0, 0.0];
+		private static var customConstants:Vector.<Number> = new <Number>[0.5, 0.0, 0.25, 1.0];
 		private static var constants2:Vector.<Number> = new <Number>[3.0, 0.0, 0.0, 0.0];
 		private static var lightProps:Vector.<Number> = new <Number>[0.0, 0.0, 0.0, 0.0];
 		private static var lightProps2:Vector.<Number> = new <Number>[0.0, 0.0, 0.0, 0.0];
@@ -295,7 +297,7 @@ package starling.extensions.deferredShading.lights
 			
 			return angle;
 		}
-		
+		var image:Image;
 		/**
 		 * Renders shadow map for this light.
 		 */
@@ -303,9 +305,14 @@ package starling.extensions.deferredShading.lights
 			support:RenderSupport,
 			occluders:Texture,
 			vertexBuffer:VertexBuffer3D,
-			indexBuffer:IndexBuffer3D
+			indexBuffer:IndexBuffer3D,
+			destructibleTerrain:DestructibleTerrain
 		):void
-		{			
+		{
+			if(!image){
+				//image = new Image(occluders);
+				//Starling.current.stage.addChild(image);
+			}
 			getBounds(stage, tmpBounds);
 			var context:Context3D = Starling.context;
 			
@@ -355,10 +362,13 @@ package starling.extensions.deferredShading.lights
 			
 			context.setVertexBufferAt(0, vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);                 
 			context.setTextureAt(0, occluders.base);
+			context.setTextureAt(1, destructibleTerrain.getWallsTexture().base);
+			context.setTextureAt(2, destructibleTerrain.getBreakageTexture().base);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, lightBounds);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 1, shadowmapConstants);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 2, constants);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 3, shadowmapConstants2);
+			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 4, customConstants);
 			
 			context.setProgram(Starling.current.getProgram(SHADOWMAP_PROGRAM));
 			
@@ -373,7 +383,9 @@ package starling.extensions.deferredShading.lights
 			// Clean up
 			
 			context.setVertexBufferAt(0, null);
-			context.setTextureAt(0, null);		
+			context.setTextureAt(0, null);
+			context.setTextureAt(1, null);
+			context.setTextureAt(2, null);
 		}
 		
 		/*-----------------------------
@@ -588,10 +600,12 @@ package starling.extensions.deferredShading.lights
 
 						// Set maximum light value of 1,1,1
 						'min ft2.xyz, ft2.xyz, fc0.yyy',
+						'mov ft11.xyz, ft2.xyz',
 
 						// light * diffuseRT
 						'mul ft2.xyz, ft2.xyz, ft1.xyz',
 
+						// Blend hidden objects with scene
 						// alpha blending => sourceColor*sourceAlpha + destColor*(1-sourceAlpha)
 						// first mul
 						'mul ft5.xyz, ft3.xyz, ft3.www',
@@ -605,8 +619,62 @@ package starling.extensions.deferredShading.lights
 						'add ft2.xyz, ft2.xyz, ft5.xyz',
 						'add ft2.w, ft2.w, ft5.w',
 
+						// Sample break textute
+						'tex ft4, ft0.xy, fs7 <2d, clamp, linear, mipnone>',
+
+						// Sample walls textute
+						'tex ft3, ft0.xy, fs6 <2d, clamp, linear, mipnone>',
+
+
+
+						// Add transparency
+						'ife ft3.x, fc0.y',
+						'mov ft3.w, fc0.w',
+						'eif',
+
+						// Break Threshold at < .5
+						'sub ft7.x, fc0.y, ft4.x',
+						'slt ft8.x, fc0.x, ft7.x',
+						'mul ft7.x, ft7.x, ft8.x',
+
+						// Break if non white
+						'ifl ft3.x, fc0.y',
+						'mul ft3.xyz, ft3.xyz, ft7.xxx',
+						'eif',
+
+						// Remove if full black
+						'ife ft3.x, fc0.w',
+						'mov ft3.w, fc0.w',
+						'eif',
+
+
+
+						// Apply lighting to wall
+						'mul ft3.xyz, ft3.xyz, ft11.xyz',
+
+
+						//[0.5, 1.0, 2.0, 0.0]
+
+
+						// Blend walls with scene
+						// alpha blending => sourceColor*sourceAlpha + destColor*(1-sourceAlpha)
+						// first mul
+						'mul ft5.xyz, ft3.xyz, ft3.www',
+						'mov ft5.w, ft3.w',
+						// sub
+						'sub ft6.w, fc0.y, ft3.w',
+						// second mul
+						'mul ft2.xyz, ft2.xyz, ft6.www',
+						'mul ft2.w, ft2.w, ft6.w',
+						// add
+						'add ft2.xyz, ft2.xyz, ft5.xyz',
+						'add ft2.w, ft2.w, ft5.w',
+
+
+
 						// Output color
 						'mov oc, ft2',
+
 					]
 				);
 			
@@ -826,8 +894,9 @@ package starling.extensions.deferredShading.lights
 				);
 			
 			// Calculate the number of pixels we can process using single draw call
-			
 			PIXELS_PER_DRAW_CALL = Math.floor((DeferredShadingContainer.OPCODE_LIMIT - 6) / 15);
+			// TODO what is this? It causes an error if we add extra instructions to the fog shader
+			PIXELS_PER_DRAW_CALL = 10;
 			
 			var i:int = PIXELS_PER_DRAW_CALL;
 			var loopCode:String = '';
@@ -846,7 +915,7 @@ package starling.extensions.deferredShading.lights
 				// Temps:
 				// ft0 - [theta, r, u, -r]
 				// ft6.x - currY
-				
+				//CAST SHADOWS
 				loopCode +=
 					ShaderUtils.joinProgramArray(
 						[		
@@ -868,7 +937,23 @@ package starling.extensions.deferredShading.lights
 							'add ft2.xy, ft2.xy, fc0.xy',
 							// Subtract half fragment - not sure why
 							'sub ft2.xy, ft2.xy, fc3.ww',
-							'tex ft3, ft2.xy, fs0 <2d, clamp, linear, mipnone>',
+							'tex ft10, ft2.xy, fs0 <2d, clamp, linear, mipnone>',
+							'tex ft3, ft2.xy, fs1 <2d, clamp, linear, mipnone>',
+							'tex ft9, ft2.xy, fs2 <2d, clamp, linear, mipnone>',
+
+
+								//move 0
+								//'mov ft3.x, fc4.y',
+
+								// if break has alpha, break the wall
+								'ifg ft9.w, fc4.y',
+									'mov ft3.x, fc4.w',
+								'eif',
+
+								// Blend walls
+								'ifl ft10.x, fc4.w',
+									'mov ft3.x, ft10.x',
+								'eif',
 							
 							// Check if the ray hit an occluder	(meaning current occluder map value < 1)
 							// Set distance of this pixel to current distance if it lower than current one
