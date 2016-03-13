@@ -82,6 +82,7 @@ import starling.errors.MissingContextError;
 		private static var lightBounds:Vector.<Number> = new Vector.<Number>();
 		private static var shadowmapConstants:Vector.<Number> = new <Number>[Math.PI, Math.PI * 1.5, 0.0, 0.1];
 		private static var shadowmapConstants2:Vector.<Number> = new <Number>[0.0, 0.0, 0.0, 0.0];
+		private static var destructibleTerrain:DestructibleTerrain;
 		
 		// Light direction
 		
@@ -250,6 +251,7 @@ import starling.errors.MissingContextError;
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 14, screenDimensions, 1);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, lightDirection, 1);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 16, lightAngle, 1);
+			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 17, new <Number>[destructibleTerrain.getCamX()/destructibleTerrain.getWallsTexture().width, destructibleTerrain.getCamY()/destructibleTerrain.getWallsTexture().height, 0.0, 0.0]);
 			context.drawTriangles(indexBuffer, 0, mNumEdges);
 			
 			context.setVertexBufferAt(0, null);
@@ -309,6 +311,8 @@ import starling.errors.MissingContextError;
 			destructibleTerrain:DestructibleTerrain
 		):void
 		{
+			SpotLight.destructibleTerrain = destructibleTerrain;
+
 			if(!image){
 				//image = new Image(occluders);
 				//Starling.current.stage.addChild(image);
@@ -369,6 +373,7 @@ import starling.errors.MissingContextError;
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 2, constants);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 3, shadowmapConstants2);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 4, customConstants);
+			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, new <Number>[destructibleTerrain.getCamX()/destructibleTerrain.getWallsTexture().width, destructibleTerrain.getCamY()/destructibleTerrain.getWallsTexture().height, 0.0, 0.0]);
 			
 			context.setProgram(Starling.current.getProgram(SHADOWMAP_PROGRAM));
 			
@@ -619,11 +624,12 @@ import starling.errors.MissingContextError;
 						'add ft2.xyz, ft2.xyz, ft5.xyz',
 						'add ft2.w, ft2.w, ft5.w',
 
+						// Get walls position
+						'add ft15.xy, ft0.xy, fc17.xy',
 						// Sample break textute
-						'tex ft4, ft0.xy, fs7 <2d, clamp, linear, mipnone>',
-
+						'tex ft4, ft15.xy, fs7 <2d, clamp, linear, mipnone>',
 						// Sample walls textute
-						'tex ft3, ft0.xy, fs6 <2d, clamp, linear, mipnone>',
+						'tex ft3, ft15.xy, fs6 <2d, clamp, linear, mipnone>',
 
 
 
@@ -896,7 +902,7 @@ import starling.errors.MissingContextError;
 			// Calculate the number of pixels we can process using single draw call
 			PIXELS_PER_DRAW_CALL = Math.floor((DeferredShadingContainer.OPCODE_LIMIT - 6) / 15);
 			// TODO what is this? It causes an error if we add extra instructions to the fog shader
-			PIXELS_PER_DRAW_CALL = 10;
+			PIXELS_PER_DRAW_CALL = 40;
 			
 			var i:int = PIXELS_PER_DRAW_CALL;
 			var loopCode:String = '';
@@ -938,15 +944,18 @@ import starling.errors.MissingContextError;
 							// Subtract half fragment - not sure why
 							'sub ft2.xy, ft2.xy, fc3.ww',
 							'tex ft10, ft2.xy, fs0 <2d, clamp, linear, mipnone>',
-							'tex ft3, ft2.xy, fs1 <2d, clamp, linear, mipnone>',
-							'tex ft9, ft2.xy, fs2 <2d, clamp, linear, mipnone>',
+
+							// get walls position
+							'add ft15.xy, ft2.xy, fc15.xy',
+							'tex ft3, ft15.xy, fs1 <2d, clamp, linear, mipnone>',
+							'tex ft9, ft15.xy, fs2 <2d, clamp, linear, mipnone>',
 
 
 								//move 0
 								//'mov ft3.x, fc4.y',
 
 								// if break has alpha, break the wall
-								'ifg ft9.w, fc4.y',
+								'ifg ft9.w, fc4.x',
 									'mov ft3.x, fc4.w',
 								'eif',
 

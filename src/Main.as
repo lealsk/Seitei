@@ -241,6 +241,8 @@ public class Main extends Sprite {
         }
         x = -char.view.sprite.x+stage.stageWidth/2;
         y = -char.view.sprite.y+stage.stageHeight/2;
+        destructibleTerrain.setCamX(-x);
+        destructibleTerrain.setCamY(-y);
         var l:Light = controlledLight as Light;
         l.x = char.view.sprite.x + char.physicsData.width/2;
         l.y = char.view.sprite.y + char.physicsData.height/2;
@@ -334,8 +336,8 @@ public class Main extends Sprite {
 
     private function addBreakage(x:Number, y:Number):void{
         var breakage:Image = new Image(breakTexture);
-        breakage.x = x - breakage.width/2;
-        breakage.y = y - breakage.height/2;
+        breakage.x = x - breakage.width/2 + destructibleTerrain.getCamX();
+        breakage.y = y - breakage.height/2 + destructibleTerrain.getCamY();
         destructibleTerrain.addBreakage(breakage);
 
     }
