@@ -476,9 +476,10 @@ import starling.textures.Texture;
 			for each(var object:Object in hidden)
 			{
 				var o:DisplayObject = object.object;
+				var p:DisplayObject = object.parent;
 				var mat:Matrix = new Matrix();
-				mat.scale(parent.scaleX, parent.scaleY);
-				mat.translate(parent.x, parent.y);
+				mat.scale(p.scaleX, p.scaleY);
+				mat.translate(p.x, p.y);
 				mat.scale(o.scaleX, o.scaleY);
 				mat.translate(o.x, o.y);
 				hiddenRT.draw(o, mat);

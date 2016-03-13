@@ -142,7 +142,7 @@ public class Main extends Sprite {
         var spr:Sprite = new Sprite();
         spr.addChild(img);
         enemy.view.sprite = spr;
-        _container.addHidden(enemy.view.sprite, _container);
+        _container.addHidden(enemy.view.sprite, this);
 
 
         var crate2:Object = createElement();
