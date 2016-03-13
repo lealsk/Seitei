@@ -11,6 +11,8 @@ import starling.textures.Texture;
 
 public class DestructibleTerrain {
 
+    private var _camX:Number = 0;
+    private var _camY:Number = 0;
     private var _walls:Texture;
     private var _breakages:Vector.<DisplayObject>;
     private var _breakTexture:RenderTexture;
@@ -35,6 +37,22 @@ public class DestructibleTerrain {
     public function addBreakage(element:DisplayObject):void{
         _breakages.push(element);
         drawToRenderTexture(element, _breakTexture);
+    }
+
+    public function getCamX():Number{
+        return _camX;
+    }
+
+    public function getCamY():Number{
+        return _camY;
+    }
+
+    public function setCamX(value:Number):void{
+        _camX = value;
+    }
+
+    public function setCamY(value:Number):void{
+        _camY = value;
     }
 
     public function getWallsTexture():Texture{

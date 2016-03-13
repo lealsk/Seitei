@@ -39,7 +39,7 @@ public class Startup extends Sprite
         _starling.stage.stageWidth  = stage.stageWidth;
         _starling.stage.stageHeight = stage.stageHeight;
         _starling.enableErrorChecking = false;//true;
-        _starling.showStats = false;//true;
+        _starling.showStats = true;
         _starling.start();
         _starling.showStats = true;
 

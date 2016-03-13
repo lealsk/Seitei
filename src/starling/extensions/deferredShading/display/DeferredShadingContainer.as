@@ -282,10 +282,11 @@ import starling.textures.Texture;
 			var fragmentProgramCode:String =
 				ShaderUtils.joinProgramArray(
 					[
+						'add ft15.xy, v0.xy, fc15.xy',
 
 						'tex ft1, v0.xy, fs4 <2d, clamp, linear, mipnone>',
-						'tex ft2, v0.xy, fs6 <2d, clamp, linear, mipnone>',
-						'tex ft3, v0.xy, fs7 <2d, clamp, linear, mipnone>',
+						'tex ft2, ft15.xy, fs6 <2d, clamp, linear, mipnone>',
+						'tex ft3, ft15.xy, fs7 <2d, clamp, linear, mipnone>',
 
 
 						// Add transparency
@@ -573,6 +574,7 @@ import starling.textures.Texture;
 				context.setVertexBufferAt(1, overlayVertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_2);
 				context.setProgram(Starling.current.getProgram(AMBIENT_PROGRAM));
 				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, ambient, 1);
+				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, new <Number>[destructibleTerrain.getCamX()/destructibleTerrain.getWallsTexture().width, destructibleTerrain.getCamY()/destructibleTerrain.getWallsTexture().height, 0.0, 0.0]);
 				context.drawTriangles(overlayIndexBuffer);
 				
 				context.setVertexBufferAt(1, null);

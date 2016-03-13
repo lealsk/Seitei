@@ -256,10 +256,12 @@ public class Main extends Sprite {
         x =  seeDistance - (_mouseX / stage.stageWidth) * seeDistance * 2 + stage.stageWidth / 2 - _char.view.sprite.x;
         y =  seeDistance - (_mouseY / stage.stageHeight) * seeDistance * 2 + stage.stageHeight / 2 - _char.view.sprite.y;
 
+        destructibleTerrain.setCamX(-x);
+        destructibleTerrain.setCamY(-y);
+
         var l:Light = _controlledLight as Light;
         l.x = _char.view.sprite.x + _char.physicsData.width/2;
         l.y = _char.view.sprite.y + _char.physicsData.height/2;
-
     }
 
     private function removeElement(element:Object):void{
@@ -354,8 +356,8 @@ public class Main extends Sprite {
 
     private function addBreakage(x:Number, y:Number):void{
         var breakage:Image = new Image(breakTexture);
-        breakage.x = x - breakage.width/2;
-        breakage.y = y - breakage.height/2;
+        breakage.x = x - breakage.width/2 + destructibleTerrain.getCamX();
+        breakage.y = y - breakage.height/2 + destructibleTerrain.getCamY();
         destructibleTerrain.addBreakage(breakage);
 
     }
