@@ -26,8 +26,7 @@ package starling.extensions.deferredShading.interfaces
 			support:RenderSupport,
 			occluders:Texture,
 			vertexBuffer:VertexBuffer3D,
-			indexBuffer:IndexBuffer3D,
-			destructibleTerrain:DestructibleTerrain
+			indexBuffer:IndexBuffer3D
 		):void;
 	}
 }
