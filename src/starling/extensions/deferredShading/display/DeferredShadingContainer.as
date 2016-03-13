@@ -39,8 +39,7 @@ import starling.textures.Texture;
 	 * that should have lighting applied to them.
 	 */
 	public class DeferredShadingContainer extends Sprite
-	{
-
+	{		
 		private static const AMBIENT_PROGRAM:String = 'AmbientProgram';
 		
 		protected var assembler:AGALMiniAssembler = new AGALMiniAssembler();
@@ -62,7 +61,7 @@ import starling.textures.Texture;
 		
 		// Program constants
 		
-		private var ambient:Vector.<Number> = new <Number>[0.5, 0.0, 0.25, 1.0];
+		private var ambient:Vector.<Number> = new <Number>[0.5, 0.0, 0.0, 1.0];
 		
 		public static var renderPass:String = RenderPass.NORMAL;
 		
@@ -93,11 +92,8 @@ import starling.textures.Texture;
 
 		//TODO Improve hidden objects code/naming
 		private var hidden:Array = new Array();
-		private var shadowMapRect:Rectangle = new Rectangle();
-
-		//TODO Extend class for custom changes
-		private var destructibleTerrain:DestructibleTerrain;
-
+		private var shadowMapRect:Rectangle = new Rectangle();		
+		
 		// Misc		
 		
 		private var prepared:Boolean = false;
@@ -173,7 +169,6 @@ import starling.textures.Texture;
 			occluders.splice(occluders.indexOf(occluder), 1);
 		}
 
-		// Custom Changes
 		public function addHidden(object:DisplayObject, parent:DisplayObjectContainer):void
 		{
 			hidden.push({object:object, parent:parent});
@@ -187,10 +182,6 @@ import starling.textures.Texture;
 					break;
 				}
 			}
-		}
-
-		public function setDestructibleTerrain(_destructibleTerrain:DestructibleTerrain):void{
-			destructibleTerrain = _destructibleTerrain;
 		}
 		
 		public override function dispose():void
@@ -281,65 +272,19 @@ import starling.textures.Texture;
 			
 			var fragmentProgramCode:String =
 				ShaderUtils.joinProgramArray(
-					[
-
+					[						
 						'tex ft1, v0.xy, fs4 <2d, clamp, linear, mipnone>',
-						'tex ft2, v0.xy, fs6 <2d, clamp, linear, mipnone>',
-						'tex ft3, v0.xy, fs7 <2d, clamp, linear, mipnone>',
-
-
-						// Add transparency
-						'ife ft2.x, fc0.w',
-							'mov ft2.w, fc0.y',
-						'eif',
-
-						// Break Threshold at < .5
-						'sub ft7.x, fc0.w, ft3.x',
-						'slt ft8.x, fc0.z, ft7.x',
-						'mul ft7.x, ft7.x, ft8.x',
-
-						// Break if non white
-						'ifl ft2.x, fc0.w',
-							'mul ft2.xyz, ft2.xyz, ft7.xxx',
-						'eif',
-
-						// Remove if full black
-						'ife ft2.x, fc0.y',
-							'mov ft2.w, fc0.y',
-						'eif',
-
-
-						//[0.5, 0.0, 0.25, 1.0]
-
-
-						// Blend walls with scene
-						// alpha blending => sourceColor*sourceAlpha + destColor*(1-sourceAlpha)
-						// first mul
-						'mul ft5.xyz, ft2.xyz, ft2.www',
-						'mov ft5.w, ft2.w',
-						// sub
-						'sub ft6.w, fc0.w, ft2.w',
-						// second mul
-						'mul ft1.xyz, ft1.xyz, ft6.www',
-						'mul ft1.w, ft1.w, ft6.w',
-						// add
-						'add ft1.xyz, ft1.xyz, ft5.xyz',
-						'add ft1.w, ft1.w, ft5.w',
-
-
-						// Apply shadow
 						'mov ft1.w, fc0.w',
 						'mul ft1.xyz, ft1.xyz, fc0.xxx',
-
 						'mov oc, ft1',
 					]
 				);
 			
 			var vertexProgramAssembler:AGALMiniAssembler = new AGALMiniAssembler();
-			vertexProgramAssembler.assemble(Context3DProgramType.VERTEX, vertexProgramCode, 2);
+			vertexProgramAssembler.assemble(Context3DProgramType.VERTEX, vertexProgramCode, 1);
 			
 			var fragmentProgramAssembler:AGALMiniAssembler = new AGALMiniAssembler();
-			fragmentProgramAssembler.assemble(Context3DProgramType.FRAGMENT, fragmentProgramCode, 2);
+			fragmentProgramAssembler.assemble(Context3DProgramType.FRAGMENT, fragmentProgramCode, 1);
 			
 			target.registerProgram(AMBIENT_PROGRAM, vertexProgramAssembler.agalcode, fragmentProgramAssembler.agalcode);
 		}
@@ -513,8 +458,7 @@ import starling.textures.Texture;
 					support, 
 					occludersRT,
 					overlayVertexBuffer,
-					overlayIndexBuffer,
-					destructibleTerrain
+					overlayIndexBuffer
 				);
 			}
 			
@@ -548,8 +492,6 @@ import starling.textures.Texture;
 				// Bind textures required by ambient light
 				
 				context.setTextureAt(4, diffuseRT.base);
-				context.setTextureAt(6, destructibleTerrain.getWallsTexture().base);
-				context.setTextureAt(7, destructibleTerrain.getBreakageTexture().base);
 				
 				// Clear RT with ambient light color
 				
@@ -558,7 +500,7 @@ import starling.textures.Texture;
 					ambientLight = DEFAULT_AMBIENT;
 				}
 
-				//support.clear(0x000000, 1.0);
+				support.clear(0x000000, 1.0);
 				context.setBlendFactors(Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA);
 				support.pushMatrix();
 				
@@ -571,7 +513,7 @@ import starling.textures.Texture;
 				context.setVertexBufferAt(0, overlayVertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
 				context.setVertexBufferAt(1, overlayVertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_2);
 				context.setProgram(Starling.current.getProgram(AMBIENT_PROGRAM));
-				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, ambient, 1);
+				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, ambient, 1);			
 				context.drawTriangles(overlayIndexBuffer);
 				
 				context.setVertexBufferAt(1, null);
@@ -595,7 +537,7 @@ import starling.textures.Texture;
 							context.setTextureAt(2, shadowMappedLight.shadowMap.base);
 							context.setTextureAt(3, occludersRT.base);
 							context.setTextureAt(5, hiddenRT.base);
-						}
+						}						
 						
 						support.loadIdentity();
 						
@@ -621,8 +563,6 @@ import starling.textures.Texture;
 							context.setTextureAt(2, null);
 							context.setTextureAt(3, null);
 							context.setTextureAt(5, null);
-							context.setTextureAt(6, null);
-							context.setTextureAt(7, null);
 						}
 					}
 				}
