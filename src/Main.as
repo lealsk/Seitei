@@ -1,8 +1,11 @@
 package {
 
 import flash.desktop.NativeApplication;
+import flash.filesystem.File;
 import flash.geom.Rectangle;
 import flash.ui.Keyboard;
+
+import starling.core.Starling;
 
 import starling.display.Image;
 import starling.display.Quad;
@@ -16,63 +19,89 @@ import starling.events.TouchPhase;
 import starling.extensions.deferredShading.display.DeferredShadingContainer;
 import starling.extensions.deferredShading.lights.AmbientLight;
 import starling.extensions.deferredShading.lights.Light;
-import starling.extensions.deferredShading.lights.PointLight;
 import starling.extensions.deferredShading.lights.SpotLight;
 import starling.textures.Texture;
-import starling.textures.Texture;
 import starling.textures.TextureAtlas;
+import starling.utils.AssetManager;
 
 public class Main extends Sprite {
-    private var pressedKeys:Array = new Array(300);
-    private var objects:Array = [];
-    private var char:Object = null;
-    private var core:Object = null;
-    private var physicsDatas:Array = new Array();
-    private var physicsDispatcher:EventDispatcher = new EventDispatcher();
-    private var controlledLight:SpotLight;
-    private var container:DeferredShadingContainer;
 
-    //TODO Create assets class
-    [Embed (source="assets/face_diffuse.png")]
-    public static const CHAR_DIFF:Class;
-    [Embed (source="assets/test_sprites.png")]
-    public static const TEST_SPRITES:Class;
-    private var testSpritesAtlas:TextureAtlas = new TextureAtlas(Texture.fromBitmap(new TEST_SPRITES(), false));
+    private var _pressedKeys:Array = new Array(300);
+    private var _objects:Array = [];
+    private var _char:Object = null;
+    private var _core:Object = null;
+    private var _physicsDatas:Array = new Array();
+    private var _physicsDispatcher:EventDispatcher = new EventDispatcher();
+    private var _controlledLight:SpotLight;
+    private var _container:DeferredShadingContainer;
+    private var _mouseX:int;
+    private var _mouseY:int;
+
+    private var _assets:AssetManager;
+
+    //camera moves the main container, where the action happens, UI, HUD and other components of the game go in a different container.
+    private var _mainContainer:Sprite;
 
     public function Main() {
-        addEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
+
+        _assets = new AssetManager();
+        loadAssets(init);
+
+    }
+
+    private function loadAssets(onComplete:Function):void
+    {
+        var appDir:File = File.applicationDirectory;
+        _assets = new AssetManager();
+
+        _assets.enqueue(
+                appDir.resolvePath("assets/")
+        );
+
+        _assets.loadQueue(function(ratio:Number):void
+        {
+            if (ratio == 1) onComplete();
+        });
+    }
+
+    /////////////////////////////////////////////////////////
+
+    private function init():void {
+
+        buildLevel();
 
     }
 
     private function createElement():Object{
+
         return {view:{sprite:null, shadow:null}, physicsData:null, castsShadow:false, hidden:false, hitPoints:100};
+
     }
 
-    private function onAddedToStage(e:Event):void{
-        //TODO Move to assets class
-        testSpritesAtlas.addRegion('enemy1', new Rectangle(637,5,128,245));
+    private function buildLevel():void{
 
-        removeEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
         stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
         stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyPressed);
         stage.addEventListener(KeyboardEvent.KEY_UP, onKeyReleased);
         stage.addEventListener(TouchEvent.TOUCH, onTouch);
 
-        container = new DeferredShadingContainer();
-        addChild(container);
-        var texture:Texture = Texture.fromEmbeddedAsset(CHAR_DIFF);
+        _container = new DeferredShadingContainer();
+        _mainContainer = new Sprite();
+        addChild(_mainContainer);
+        _mainContainer.addChild(_container);
+        var texture:Texture = _assets.getTexture("enemy1");
 
         var map:Object = createElement();
         map.view.sprite = new Quad(700, 500, 0xbb8855);
-        container.addChild(map.view.sprite);
+        _container.addChild(map.view.sprite);
 
         map.physicsData = new PhysicsData();
         map.physicsData.owner = map;
         map.physicsData.width = 700;
         map.physicsData.height = 500;
         map.physicsData.container = true;
-        physicsDatas.push(map.physicsData);
-        objects.push(map);
+        _physicsDatas.push(map.physicsData);
+        _objects.push(map);
 
         var crate:Object = createElement();
         crate.castsShadow = true;
@@ -82,8 +111,8 @@ public class Main extends Sprite {
         crate.physicsData.height = 50;
         crate.physicsData.x = 100;
         crate.physicsData.y = 100;
-        physicsDatas.push(crate.physicsData);
-        objects.push(crate);
+        _physicsDatas.push(crate.physicsData);
+        _objects.push(crate);
 
         var img:Image = new Image(texture);
         img.width = crate.physicsData.width;
@@ -91,8 +120,8 @@ public class Main extends Sprite {
         var spr:Sprite = new Sprite();
         spr.addChild(img);
         crate.view.sprite = spr;
-        container.addChild(crate.view.sprite);
-        container.addOccluder(crate.view.sprite);
+        _container.addChild(crate.view.sprite);
+        _container.addOccluder(crate.view.sprite);
 
 
         var enemy:Object = createElement();
@@ -100,20 +129,20 @@ public class Main extends Sprite {
         enemy.hidden = true;
         enemy.physicsData = new PhysicsData();
         enemy.physicsData.owner = enemy;
-        enemy.physicsData.width = testSpritesAtlas.getRegion('enemy1').width*scale;
-        enemy.physicsData.height = testSpritesAtlas.getRegion('enemy1').height*scale;
+        enemy.physicsData.width = _assets.getTexture("enemy1").width * scale;
+        enemy.physicsData.height = _assets.getTexture("enemy1").height * scale;
         enemy.physicsData.x = 50;
         enemy.physicsData.y = 150;
-        physicsDatas.push(enemy.physicsData);
-        objects.push(enemy);
+        _physicsDatas.push(enemy.physicsData);
+        _objects.push(enemy);
 
-        var img:Image = new Image(testSpritesAtlas.getTexture('enemy1'));
+        var img:Image = new Image(_assets.getTexture("enemy1"));
         img.width = enemy.physicsData.width;
         img.height = enemy.physicsData.height;
         var spr:Sprite = new Sprite();
         spr.addChild(img);
         enemy.view.sprite = spr;
-        container.addHidden(enemy.view.sprite, container);
+        _container.addHidden(enemy.view.sprite, _container);
 
 
         var crate2:Object = createElement();
@@ -125,8 +154,8 @@ public class Main extends Sprite {
         crate2.physicsData.height = 50;
         crate2.physicsData.x = 400;
         crate2.physicsData.y = 120;
-        physicsDatas.push(crate2.physicsData);
-        objects.push(crate2);
+        _physicsDatas.push(crate2.physicsData);
+        _objects.push(crate2);
 
         var img:Image = new Image(texture);
         img.width = crate2.physicsData.width;
@@ -134,94 +163,93 @@ public class Main extends Sprite {
         var spr:Sprite = new Sprite();
         spr.addChild(img);
         crate2.view.sprite = spr;
-        container.addChild(crate2.view.sprite);
-        container.addOccluder(crate2.view.sprite);
+        _container.addChild(crate2.view.sprite);
+        _container.addOccluder(crate2.view.sprite);
 
 
-        char = createElement();
-        char.view.sprite = new Quad(30, 30, 0x77ff11);
-        container.addChild(char.view.sprite);
+        _char = createElement();
+        _char.view.sprite = new Quad(30, 30, 0x77ff11);
+        _container.addChild(_char.view.sprite);
 
-        char.physicsData = new PhysicsData();
-        char.physicsData.owner = char;
-        char.physicsData.width = 30;
-        char.physicsData.height = 30;
-        char.physicsData.x = 200;
-        char.physicsData.y = 200;
-        char.physicsData.checkCollisions = true;
-        physicsDatas.push(char.physicsData);
-        objects.push(char);
+        _char.physicsData = new PhysicsData();
+        _char.physicsData.owner = _char;
+        _char.physicsData.width = 30;
+        _char.physicsData.height = 30;
+        _char.physicsData.x = 200;
+        _char.physicsData.y = 200;
+        _char.physicsData.checkCollisions = true;
+        _physicsDatas.push(_char.physicsData);
+        _objects.push(_char);
 
 
-        core = createElement();
+        _core = createElement();
 
-        core.castsShadow = true;
-        core.physicsData = new PhysicsData();
-        core.physicsData.owner = core;
-        core.physicsData.width = 80;
-        core.physicsData.height = 20;
-        core.physicsData.x = 400;
-        core.physicsData.y = 320;
-        physicsDatas.push(core.physicsData);
-        objects.push(core);
+        _core.castsShadow = true;
+        _core.physicsData = new PhysicsData();
+        _core.physicsData.owner = _core;
+        _core.physicsData.width = 80;
+        _core.physicsData.height = 20;
+        _core.physicsData.x = 400;
+        _core.physicsData.y = 320;
+        _physicsDatas.push(_core.physicsData);
+        _objects.push(_core);
 
         var img:Image = new Image(texture);
-        img.width = core.physicsData.width;
-        img.height = core.physicsData.height;
+        img.width = _core.physicsData.width;
+        img.height = _core.physicsData.height;
         var spr:Sprite = new Sprite();
         spr.addChild(img);
-        core.view.sprite = spr;
-        container.addChild(core.view.sprite);
-        container.addOccluder(core.view.sprite);
+        _core.view.sprite = spr;
+        _container.addChild(_core.view.sprite);
+        _container.addOccluder(_core.view.sprite);
 
-        controlledLight = new SpotLight(0xFFFFFFFF, .2, 800,0);
-        controlledLight.castsShadows = true;
-        controlledLight.angle = Math.PI*.8;
-        container.addChild(controlledLight);
+        _controlledLight = new SpotLight(0xFFFFFFFF, .2, 800,0);
+        _controlledLight.castsShadows = true;
+        _controlledLight.angle = Math.PI*.8;
+        _container.addChild(_controlledLight);
 
         var ambient:AmbientLight = new AmbientLight(0x000000);
-        container.addChild(ambient);
+        _container.addChild(ambient);
 
-        physicsDispatcher.addEventListener("collide", onCollide);
+        _physicsDispatcher.addEventListener("collide", onCollide);
     }
 
     private function onEnterFrame(e:Event):void{
 
-        updatePhysics(physicsDatas);
+        updatePhysics(_physicsDatas);
 
         var spd:Number = 3;
-        if(pressedKeys[Keyboard.D]){
-            char.physicsData.velX = spd;
+        if(_pressedKeys[Keyboard.D]){
+            _char.physicsData.velX = spd;
         }
-        if(pressedKeys[Keyboard.A]){
-            char.physicsData.velX = -spd;
+        if(_pressedKeys[Keyboard.A]){
+            _char.physicsData.velX = -spd;
         }
-        if(pressedKeys[Keyboard.W]){
-            char.physicsData.velY = -spd;
+        if(_pressedKeys[Keyboard.W]){
+            _char.physicsData.velY = -spd;
         }
-        if(pressedKeys[Keyboard.S]){
-            char.physicsData.velY = spd;
+        if(_pressedKeys[Keyboard.S]){
+            _char.physicsData.velY = spd;
         }
 
-        for each(var object:Object in objects){
+        for each(var object:Object in _objects){
             object.view.sprite.x = object.physicsData.x;
             object.view.sprite.y = object.physicsData.y;
         }
-        x = -char.view.sprite.x+stage.stageWidth/2;
-        y = -char.view.sprite.y+stage.stageHeight/2;
-        var l:Light = controlledLight as Light;
-        l.x = char.view.sprite.x + char.physicsData.width/2;
-        l.y = char.view.sprite.y + char.physicsData.height/2;
 
-        if(char.physicsData.colliding == core.physicsData){
-            NativeApplication.nativeApplication.exit();
-        }
+        x = stage.stageWidth / 2 - _char.view.sprite.x - _mouseX;
+        y = stage.stageHeight / 2 - _char.view.sprite.y - _mouseY;
+
+        var l:Light = _controlledLight as Light;
+        l.x = _char.view.sprite.x + _char.physicsData.width/2;
+        l.y = _char.view.sprite.y + _char.physicsData.height/2;
+
     }
 
     private function removeElement(element:Object):void{
-        physicsDatas.splice(physicsDatas.indexOf(element.physicsData, 0), 1);
+        _physicsDatas.splice(_physicsDatas.indexOf(element.physicsData, 0), 1);
         if(element.hidden){
-            container.removeHidden(element.view.sprite);
+            _container.removeHidden(element.view.sprite);
         } else {
             if (element.view.sprite.parent) {
                 element.view.sprite.parent.removeChild(element.view.sprite);
@@ -244,34 +272,40 @@ public class Main extends Sprite {
     }
 
     private function onKeyPressed(e:KeyboardEvent):void{
-        pressedKeys[e.keyCode] = true;
+        _pressedKeys[e.keyCode] = true;
     }
 
     private function onKeyReleased(e:KeyboardEvent):void{
-        pressedKeys[e.keyCode] = false;
+        _pressedKeys[e.keyCode] = false;
     }
 
     private function onTouch(e:TouchEvent):void{
+
         var touch:Touch = e.getTouch(this);
-        if(!touch) {
-            return;
+        var began:Touch = e.getTouch(this, TouchPhase.BEGAN);
+        var hover:Touch = e.getTouch(this, TouchPhase.HOVER);
+
+        if(touch){
+            _mouseX = touch.globalX;
+            _mouseY = touch.globalY;
         }
-        if(touch.phase == TouchPhase.BEGAN){
+
+        if(began){
 
             var bullet:Object = createElement();
             bullet.view.sprite = new Quad(8, 8, 0xffaa88);
-            container.addChild(bullet.view.sprite);
+            _container.addChild(bullet.view.sprite);
 
             bullet.physicsData = new PhysicsData();
             bullet.physicsData.owner = bullet;
             bullet.physicsData.width = 6;
             bullet.physicsData.height = 6;
             var dst:Number = 30;
-            var px:Number = char.physicsData.x + char.physicsData.width / 2;
-            var py:Number = char.physicsData.y + char.physicsData.height / 2;
+            var px:Number = _char.physicsData.x + _char.physicsData.width / 2;
+            var py:Number = _char.physicsData.y + _char.physicsData.height / 2;
 
 
-            var rotation:Number = Math.atan2(touch.globalY-(controlledLight.y+y), touch.globalX-(controlledLight.x+x));
+            var rotation:Number = Math.atan2(began.globalY-(_controlledLight.y+y), began.globalX-(_controlledLight.x+x));
 
             bullet.physicsData.x = px + Math.cos(rotation) * dst;
             bullet.physicsData.y = py + Math.sin(rotation) * dst;
@@ -281,12 +315,19 @@ public class Main extends Sprite {
             bullet.physicsData.velY = Math.sin(rotation) * spd;
 
             bullet.physicsData.checkCollisions = true;
-            physicsDatas.push(bullet.physicsData);
-            objects.push(bullet);
+            _physicsDatas.push(bullet.physicsData);
+            _objects.push(bullet);
 
         }
-        var l:SpotLight = controlledLight as SpotLight;
-        l.rotation = Math.atan2(touch.globalY-(l.y+y), touch.globalX-(l.x+x))-Math.PI*.4;
+
+        if(hover){
+
+
+            var light:SpotLight = _controlledLight as SpotLight;
+            light.rotation = Math.atan2(hover.globalY-(light.y + y), hover.globalX - (light.x + x)) - Math.PI * 0.4;
+
+        }
+
     }
 
     private function checkCollisions(data:PhysicsData, datas:Array):void{
@@ -306,7 +347,7 @@ public class Main extends Sprite {
                         data.velY = data.y + data.velY < data2.y ? data2.y - data.y : (data2.y + data2.height) - (data.y+data.height);
                     }
                     if (data.colliding) {
-                        physicsDispatcher.dispatchEventWith("collide", false, data);
+                        _physicsDispatcher.dispatchEventWith("collide", false, data);
                     }
                 } else {
                     // Collision with objects
@@ -326,7 +367,7 @@ public class Main extends Sprite {
                         data.velY = data2.velY;
                     }
                     if(data.colliding){
-                        physicsDispatcher.dispatchEventWith("collide", false, data);
+                        _physicsDispatcher.dispatchEventWith("collide", false, data);
                     }
                 }
             }
@@ -334,18 +375,24 @@ public class Main extends Sprite {
     }
 
     private function updatePhysics(datas:Array):void{
+
         for each(var data:PhysicsData in datas) {
+
             if (data.checkCollisions) {
                 checkCollisions(data, datas);
             }
         }
+
         for each(var data:PhysicsData in datas){
+
             data.x += data.velX;
             data.y += data.velY;
+
             if(data.velX != 0 || data.velY != 0) {
                 data.direction = Math.atan2(data.velY, data.velX);
             }
         }
+
         for each(var data:PhysicsData in datas){
             if(data.z <= 0) {
                 data.velX = 0;

@@ -40,6 +40,25 @@ public class Startup extends Sprite
         _starling.enableErrorChecking = false;//true;
         _starling.showStats = false;//true;
         _starling.start();
+        _starling.showStats = true;
+
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 }
