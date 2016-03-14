@@ -237,8 +237,9 @@ public class Main extends Sprite {
             object.view.sprite.y = object.physicsData.y;
         }
 
-        x = stage.stageWidth / 2 - _char.view.sprite.x - _mouseX;
-        y = stage.stageHeight / 2 - _char.view.sprite.y - _mouseY;
+        var seeDistance:Number = stage.stageWidth / 8;
+        x =  seeDistance - (_mouseX / stage.stageWidth) * seeDistance * 2 + stage.stageWidth / 2 - _char.view.sprite.x;
+        y =  seeDistance - (_mouseY / stage.stageHeight) * seeDistance * 2 + stage.stageHeight / 2 - _char.view.sprite.y;
 
         var l:Light = _controlledLight as Light;
         l.x = _char.view.sprite.x + _char.physicsData.width/2;
