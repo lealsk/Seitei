@@ -13,7 +13,7 @@ import flash.geom.Rectangle;
 import starling.core.Starling;
 import starling.extensions.deferredShading.display.QuadBatchPlus;
 
-[SWF(width="1024", height="600", frameRate="60", backgroundColor="#888888")]
+[SWF(width="1024", height="600", frameRate="60", backgroundColor="#1d1d1d")]
 public class Startup extends Sprite
 {
     private var _starling:Starling;

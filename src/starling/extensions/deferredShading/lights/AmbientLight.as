@@ -11,7 +11,7 @@ package starling.extensions.deferredShading.lights
 	 */
 	public class AmbientLight extends Light
 	{
-		private var bounds:Rectangle = new Rectangle();
+		private var boundz:Rectangle = new Rectangle();
 		
 		public function AmbientLight(color:uint)
 		{
@@ -25,7 +25,7 @@ package starling.extensions.deferredShading.lights
 		
 		public override function getBounds(targetSpace:DisplayObject, resultRect:Rectangle=null):Rectangle
 		{
-			return bounds;
+			return boundz;
 		}
 	}
 }

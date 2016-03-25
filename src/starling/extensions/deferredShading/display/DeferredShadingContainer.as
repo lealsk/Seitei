@@ -12,6 +12,7 @@ package starling.extensions.deferredShading.display
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.VertexBuffer3D;
 import flash.geom.Matrix;
+import flash.geom.Point;
 import flash.geom.Rectangle;
 	
 	import starling.core.RenderSupport;
@@ -569,12 +570,14 @@ import starling.textures.Texture;
 				/*ambient[0] = ambientLight._colorR;
 				ambient[1] = ambientLight._colorG;
 				ambient[2] = ambientLight._colorB;*/
-				
+
+				var globalPosition:Point = this.localToGlobal(new Point(0, 0));
+
 				context.setVertexBufferAt(0, overlayVertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
 				context.setVertexBufferAt(1, overlayVertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_2);
 				context.setProgram(Starling.current.getProgram(AMBIENT_PROGRAM));
 				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, ambient, 1);
-				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, new <Number>[destructibleTerrain.getCamX()/destructibleTerrain.getWallsTexture().width, destructibleTerrain.getCamY()/destructibleTerrain.getWallsTexture().height, 0.0, 0.0]);
+				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, new <Number>[-globalPosition.x / destructibleTerrain.getWallsTexture().width, -globalPosition.y / destructibleTerrain.getWallsTexture().height, 0.0, 0.0]);
 				context.drawTriangles(overlayIndexBuffer);
 				
 				context.setVertexBufferAt(1, null);
