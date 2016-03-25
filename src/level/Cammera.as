@@ -18,6 +18,7 @@ public class Cammera extends EventDispatcher{
 
     public function Cammera(displayObject:DisplayObject) {
 
+        _displayObject = displayObject;
         _seeDistance = displayObject.width / SEE_DISTANCE_FACTOR;
         _stageWidth = _displayObject.stage.stageWidth;
         _stageHeight = _displayObject.stage.stageHeight;

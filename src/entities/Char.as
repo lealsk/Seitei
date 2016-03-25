@@ -1,5 +1,6 @@
 package entities {
 
+import flash.ui.Keyboard;
 import flash.utils.Dictionary;
 
 import starling.textures.Texture;
@@ -7,21 +8,44 @@ import starling.textures.Texture;
 
 public class Char extends Entity {
 
-    public function Char(viewTexture:Texture) {
+    public function Char(entityName:String) {
 
 
-        super(viewTexture);
+        super(entityName);
 
 
     }
 
-    public function move(pressedKeys:Dictionary):void {
+    public function update(pressedKeys:Dictionary):void {
 
 
-        /*if(_pressedKeys[Keyboard.W] || _pressedKeys[Keyboard.A || _pressedKeys[Keyboard.S] || _pressedKeys[Keyboard.D]] ){
+        if(pressedKeys[Keyboard.W]){
+
+            getView().y -= 5;
+
+        }
+
+        if(pressedKeys[Keyboard.A]){
+
+            getView().x -= 5;
+
+        }
+
+        if(pressedKeys[Keyboard.S]){
+
+            getView().y += 5;
+
+        }
+
+        if(pressedKeys[Keyboard.D]) {
+
+            getView().x += 5;
+        }
 
 
-        }*/
+
+
+
 
     }
 

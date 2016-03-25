@@ -6,12 +6,17 @@ public class Entity {
 
     protected var _view:Image;
 
-    public function Entity(viewTexture:Texture) {
+    public function Entity(entityName:String) {
 
-        _view = new Image(viewTexture);
+        _view = new Image(Main.getAssetManager().getTexture(entityName));
 
     }
 
+    public function getView():Image {
+
+        return _view;
+
+    }
 
 
 
