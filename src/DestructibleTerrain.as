@@ -1,30 +1,17 @@
 package {
 
-import flash.geom.Matrix;
-
 import starling.core.Starling;
 import starling.display.DisplayObject;
+import starling.display.Quad;
 import starling.textures.RenderTexture;
 import starling.textures.Texture;
 
 public class DestructibleTerrain {
 
-    private var _camX:Number = 0;
-    private var _camY:Number = 0;
     private var _walls:Texture;
-    private var _breakages:Vector.<DisplayObject>;
     private var _breakTexture:RenderTexture;
 
     public function DestructibleTerrain() {
-
-    }
-
-    private function drawToRenderTexture(object:DisplayObject, renderTexture:RenderTexture):void{
-
-        var mat:Matrix = new Matrix();
-        mat.scale(object.scaleX, object.scaleY);
-        mat.translate(object.x, object.y);
-        renderTexture.draw(object, mat);
 
     }
 
@@ -32,31 +19,15 @@ public class DestructibleTerrain {
 
         _breakTexture = new RenderTexture(Starling.current.nativeStage.stageWidth, Starling.current.nativeStage.stageHeight, true);
         _walls = walls;
-        _breakages = new <DisplayObject>[];
-
+        //TODO remove!!!
+        var quad:Quad = new Quad(1, 1);
+        _breakTexture.draw(quad);
     }
 
     public function addBreakage(element:DisplayObject):void{
 
-        _breakages.push(element);
-        drawToRenderTexture(element, _breakTexture);
+        _breakTexture.draw(element);
 
-    }
-
-    public function getCamX():Number{
-        return _camX;
-    }
-
-    public function getCamY():Number{
-        return _camY;
-    }
-
-    public function setCamX(value:Number):void{
-        _camX = value;
-    }
-
-    public function setCamY(value:Number):void{
-        _camY = value;
     }
 
     public function getWallsTexture():Texture{

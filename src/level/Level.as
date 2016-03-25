@@ -13,14 +13,14 @@ public class Level extends Sprite {
     private var _DFC:DeferredShadingContainer;
     private var _assets:AssetManager;
     private var _destructibleTerrain:DestructibleTerrain;
-    
-    
+        
     public function Level(assets:AssetManager, destructibleTerrain:DestructibleTerrain) {
 
         _assets = assets;
         _destructibleTerrain = destructibleTerrain;
         
         _DFC = new DeferredShadingContainer();
+        addChild(_DFC);
 
         var bg:Quad = new Quad(700, 500, 0xbb8855);
         _DFC.addChild(bg);

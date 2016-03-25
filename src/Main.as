@@ -5,7 +5,7 @@ import entities.Char;
 import flash.filesystem.File;
 import flash.utils.Dictionary;
 
-import level.Cammera;
+import level.Camera;
 import level.Level;
 
 import starling.display.Image;
@@ -28,8 +28,7 @@ public class Main extends Sprite {
     private var _mouseY:int;
     private var _destructibleTerrain:DestructibleTerrain;
     private var _level:Level;
-    //private var _cammera:Cammera;
-
+    private var _camera:Camera;
 
     private static var _assets:AssetManager;
 
@@ -77,7 +76,7 @@ public class Main extends Sprite {
 
         addChild(_mainContainer);
 
-       // _cammera = new Cammera(_mainContainer);
+        _camera = new Camera(_mainContainer);
 
         _char = new Char("hero");
         _level.setChar(_char);
@@ -107,6 +106,7 @@ public class Main extends Sprite {
 
         var began:Touch = e.getTouch(stage, TouchPhase.BEGAN);
         var hover:Touch = e.getTouch(stage, TouchPhase.HOVER);
+        var touch:Touch = e.getTouch(this);
 
         if(began){
 
@@ -114,12 +114,18 @@ public class Main extends Sprite {
 
         }
 
-        if(hover){
+        if(touch){
 
-           // _cammera.update(hover);
-            _controlledLight.rotation = Math.atan2(hover.globalY - (_controlledLight.y + y), hover.globalX - (_controlledLight.x + x)) - Math.PI * 0.4;
+            _mouseX = touch.globalX;
+            _mouseY = touch.globalY;
 
         }
+
+
+
+
+
+
 
     }
 
@@ -128,12 +134,11 @@ public class Main extends Sprite {
         //if moving
         _char.update(_pressedKeys);
 
-        //TODO remove this dependency
-        _destructibleTerrain.setCamX(-x);
-        _destructibleTerrain.setCamX(-y);
-
         _controlledLight.x = _char.getView().x + _char.getView().width/2;
         _controlledLight.y = _char.getView().y + _char.getView().height/2;
+
+        _camera.update(_char.getView().x, _char.getView().y, _mouseX, _mouseY);
+        _controlledLight.rotation = Math.atan2(_mouseY - (_controlledLight.y + _mainContainer.y), _mouseX - (_controlledLight.x + _mainContainer.x)) - Math.PI * 0.4;
 
 
     }
