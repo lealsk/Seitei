@@ -1,41 +1,25 @@
 package level {
+import starling.display.Quad;
 import starling.display.Sprite;
+import starling.extensions.deferredShading.display.DeferredShadingContainer;
+import starling.textures.Texture;
+import starling.utils.AssetManager;
 
-public class Level extends Sprite{
+public class Level extends Sprite {
 
-    private var _cammera:Cammera;
+    private var _container:DeferredShadingContainer;
+    private var _assets:AssetManager;
 
-    public function Level() {
+    public function Level(assets:AssetManager) {
 
-    }
-
-    private function buildLevel():void{
-
-
-        _cammera = new Cammera();
-
-        stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
-        stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyPressed);
-        stage.addEventListener(KeyboardEvent.KEY_UP, onKeyReleased);
-        stage.addEventListener(TouchEvent.TOUCH, onTouch);
+        _assets = assets;
 
         _container = new DeferredShadingContainer();
-        _mainContainer = new Sprite();
-        addChild(_mainContainer);
-        _mainContainer.addChild(_container);
+
         var texture:Texture = _assets.getTexture("enemy1");
 
-        var map:Object = createElement();
-        map.view.sprite = new Quad(700, 500, 0xbb8855);
-        _container.addChild(map.view.sprite);
-
-        map.physicsData = new PhysicsData();
-        map.physicsData.owner = map;
-        map.physicsData.width = 700;
-        map.physicsData.height = 500;
-        map.physicsData.container = true;
-        _physicsDatas.push(map.physicsData);
-        _objects.push(map);
+        var bg:Quad = new Quad(700, 500, 0xbb8855);
+        _container.addChild(bg);
 
         var crate:Object = createElement();
         crate.castsShadow = true;
@@ -148,6 +132,7 @@ public class Level extends Sprite{
         _container.addChild(ambient);
 
         _physicsDispatcher.addEventListener("collide", onCollide);
+
     }
 }
 }

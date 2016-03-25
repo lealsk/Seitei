@@ -4,6 +4,9 @@ import entities.Char;
 
 import flash.filesystem.File;
 import flash.ui.Keyboard;
+import flash.utils.Dictionary;
+
+import level.Cammera;
 
 import level.Level;
 
@@ -23,8 +26,8 @@ import starling.utils.AssetManager;
 
 public class Main extends Sprite {
 
-    private var _pressedKeys:Array = new Array(300);
-    private var _objects:Array = [];
+    private var _pressedKeys:Dictionary;
+
     private var _char:Char;
     private var _controlledLight:SpotLight;
     private var _container:DeferredShadingContainer;
@@ -32,6 +35,8 @@ public class Main extends Sprite {
     private var _mouseY:int;
     private var _destructibleTerrain:DestructibleTerrain;
     private var _level:Level;
+    private var _cammera:Cammera;
+
 
     private var _assets:AssetManager;
 
@@ -64,16 +69,20 @@ public class Main extends Sprite {
 
     private function init():void {
 
-        _level = new Level();
+        _pressedKeys = new Dictionary();
+        _mainContainer = new Sprite();
+        _level = new Level(_assets);
+        _mainContainer.addChild(_level);
+        addChild(_mainContainer);
+
+        _cammera = new Cammera(_mainContainer);
+
+        addEventListener(Event.ENTER_FRAME, onEnterFrame);
+        addEventListener(KeyboardEvent.KEY_DOWN, onKeyPressed);
+        addEventListener(KeyboardEvent.KEY_UP, onKeyReleased);
+        addEventListener(TouchEvent.TOUCH, onTouch);
 
     }
-
-
-
-
-
-
-
 
 
     private function onKeyPressed(e:KeyboardEvent):void{
@@ -98,17 +107,16 @@ public class Main extends Sprite {
             _mouseY = touch.globalY;
         }
 
-        //TODO remove this from here
-        if(hover){
-
-            var light:SpotLight = _controlledLight as SpotLight;
-            light.rotation = Math.atan2(hover.globalY-(light.y + y), hover.globalX - (light.x + x)) - Math.PI * 0.4;
-
-        }
-
         if(began){
 
             addBreakage(touch.globalX, touch.globalY);
+
+        }
+
+        if(hover){
+
+            _cammera.update(hover);
+            _controlledLight.rotation = Math.atan2(hover.globalY - (_controlledLight.y + y), hover.globalX - (_controlledLight.x + x)) - Math.PI * 0.4;
 
         }
 
@@ -117,35 +125,23 @@ public class Main extends Sprite {
     private function onEnterFrame(e:Event):void{
 
         //if moving
-        if(_pressedKeys[Keyboard.W] || _pressedKeys[Keyboard.A || _pressedKeys[Keyboard.S] || _pressedKeys[Keyboard.D]] ){
+        _char.move(_pressedKeys);
 
-            _char.move(_pressedKeys);
-
-        }
-
-
-        for each(var object:Object in _objects){
-            object.view.sprite.x = object.physicsData.x;
-            object.view.sprite.y = object.physicsData.y;
-        }
-
-        var seeDistance:Number = stage.stageWidth / 8;
-        x =  seeDistance - (_mouseX / stage.stageWidth) * seeDistance * 2 + stage.stageWidth / 2 - _char.view.sprite.x;
-        y =  seeDistance - (_mouseY / stage.stageHeight) * seeDistance * 2 + stage.stageHeight / 2 - _char.view.sprite.y;
-
+        //TODO remove this dependency
         _destructibleTerrain.setCamX(-x);
-        _destructibleTerrain.setCamY(-y);
+        _destructibleTerrain.setCamX(-y);
 
-        var l:Light = _controlledLight as Light;
-        l.x = _char.view.sprite.x + _char.physicsData.width/2;
-        l.y = _char.view.sprite.y + _char.physicsData.height/2;
+        /*_controlledLight.x = _char.view.sprite.x + _char.physicsData.width/2;
+        _controlledLight.y = _char.view.sprite.y + _char.physicsData.height/2;*/
+
+
     }
 
-    private function addBreakage(x:Number, y:Number):void{
+    private function addBreakage(xPos:Number, yPos:Number):void{
 
         var breakage:Image = new Image(_assets.getTexture("break"));
-        breakage.x = x - breakage.width/2 + _destructibleTerrain.getCamX();
-        breakage.y = y - breakage.height/2 + _destructibleTerrain.getCamY();
+        breakage.x = xPos;
+        breakage.y = yPos;
         _destructibleTerrain.addBreakage(breakage);
 
     }
