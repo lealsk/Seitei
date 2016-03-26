@@ -17,7 +17,7 @@ public class DestructibleTerrain {
 
     public function init(walls:Texture):void{
 
-        _breakTexture = new RenderTexture(Starling.current.nativeStage.stageWidth, Starling.current.nativeStage.stageHeight, true);
+        _breakTexture = new RenderTexture(walls.width, walls.height, true);
         _walls = walls;
         //TODO remove!!!
         var quad:Quad = new Quad(1, 1);

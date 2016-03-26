@@ -283,7 +283,8 @@ import starling.textures.Texture;
 			var fragmentProgramCode:String =
 				ShaderUtils.joinProgramArray(
 					[
-						'add ft15.xy, v0.xy, fc15.xy',
+						'mul ft16.xy, v0.xy, fc15.zw',
+						'add ft15.xy, ft16.xy, fc15.xy',
 
 						'tex ft1, v0.xy, fs4 <2d, clamp, linear, mipnone>',
 						'tex ft2, ft15.xy, fs6 <2d, clamp, linear, mipnone>',
@@ -297,7 +298,7 @@ import starling.textures.Texture;
 
 						// Break Threshold at < .5
 						'sub ft7.x, fc0.w, ft3.x',
-						'slt ft8.x, fc0.z, ft7.x',
+						'slt ft8.x, fc0.x, ft7.x',
 						'mul ft7.x, ft7.x, ft8.x',
 
 						// Break if non white
@@ -577,7 +578,8 @@ import starling.textures.Texture;
 				context.setVertexBufferAt(1, overlayVertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_2);
 				context.setProgram(Starling.current.getProgram(AMBIENT_PROGRAM));
 				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, ambient, 1);
-				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, new <Number>[-globalPosition.x / stage.stageWidth, -globalPosition.y / stage.stageHeight, 0.0, 0.0]);
+				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, new <Number>[-globalPosition.x / destructibleTerrain.getWallsTexture().width, -globalPosition.y / destructibleTerrain.getWallsTexture().height,
+					stage.stageWidth / destructibleTerrain.getWallsTexture().width, stage.stageHeight / destructibleTerrain.getWallsTexture().height]);
 				context.drawTriangles(overlayIndexBuffer);
 				
 				context.setVertexBufferAt(1, null);

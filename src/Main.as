@@ -105,20 +105,15 @@ public class Main extends Sprite {
     private function onTouch(e:TouchEvent):void{
 
         var began:Touch = e.getTouch(stage, TouchPhase.BEGAN);
-        var hover:Touch = e.getTouch(stage, TouchPhase.HOVER);
+        var moved:Touch = e.getTouch(stage, TouchPhase.MOVED);
         var touch:Touch = e.getTouch(this);
 
-        if(began){
-
-            addBreakage(began.globalX, began.globalY);
-
+        if((began || moved) && touch){
+            addBreakage(touch.globalX, touch.globalY);
         }
-
         if(touch){
-
             _mouseX = touch.globalX;
             _mouseY = touch.globalY;
-
         }
 
 

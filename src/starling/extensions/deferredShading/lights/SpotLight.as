@@ -253,7 +253,8 @@ import starling.errors.MissingContextError;
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 14, screenDimensions, 1);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, lightDirection, 1);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 16, lightAngle, 1);
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 17, new <Number>[-globalPosition.x / stage.stageWidth, -globalPosition.y / stage.stageHeight, 0.0, 0.0]);
+			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 17, new <Number>[-globalPosition.x / destructibleTerrain.getWallsTexture().width, -globalPosition.y / destructibleTerrain.getWallsTexture().height,
+				stage.stageWidth / destructibleTerrain.getWallsTexture().width, stage.stageHeight / destructibleTerrain.getWallsTexture().height]);
 			context.drawTriangles(indexBuffer, 0, mNumEdges);
 			
 			context.setVertexBufferAt(0, null);
@@ -377,7 +378,8 @@ import starling.errors.MissingContextError;
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 2, constants);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 3, shadowmapConstants2);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 4, customConstants);
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, new <Number>[-globalPosition.x / stage.stageWidth, -globalPosition.y / stage.stageHeight, 0.0, 0.0]);
+			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, new <Number>[-globalPosition.x / destructibleTerrain.getWallsTexture().width, -globalPosition.y / destructibleTerrain.getWallsTexture().height,
+				stage.stageWidth / destructibleTerrain.getWallsTexture().width, stage.stageHeight / destructibleTerrain.getWallsTexture().height]);
 			
 			context.setProgram(Starling.current.getProgram(SHADOWMAP_PROGRAM));
 			
@@ -628,8 +630,10 @@ import starling.errors.MissingContextError;
 						'add ft2.xyz, ft2.xyz, ft5.xyz',
 						'add ft2.w, ft2.w, ft5.w',
 
+
+						'mul ft16.xy, ft0.xy, fc17.zw',
 						// Get walls position
-						'add ft15.xy, ft0.xy, fc17.xy',
+						'add ft15.xy, ft16.xy, fc17.xy',
 						// Sample break textute
 						'tex ft4, ft15.xy, fs7 <2d, clamp, linear, mipnone>',
 						// Sample walls textute
@@ -950,7 +954,9 @@ import starling.errors.MissingContextError;
 							'tex ft10, ft2.xy, fs0 <2d, clamp, linear, mipnone>',
 
 							// get walls position
-							'add ft15.xy, ft2.xy, fc15.xy',
+
+							'mul ft16.xy, ft2.xy, fc15.zw',
+							'add ft15.xy, ft16.xy, fc15.xy',
 							'tex ft3, ft15.xy, fs1 <2d, clamp, linear, mipnone>',
 							'tex ft9, ft15.xy, fs2 <2d, clamp, linear, mipnone>',
 
