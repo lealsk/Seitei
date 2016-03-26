@@ -577,7 +577,7 @@ import starling.textures.Texture;
 				context.setVertexBufferAt(1, overlayVertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_2);
 				context.setProgram(Starling.current.getProgram(AMBIENT_PROGRAM));
 				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, ambient, 1);
-				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, new <Number>[-globalPosition.x / destructibleTerrain.getWallsTexture().width, -globalPosition.y / destructibleTerrain.getWallsTexture().height, 0.0, 0.0]);
+				context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, new <Number>[-globalPosition.x / stage.stageWidth, -globalPosition.y / stage.stageHeight, 0.0, 0.0]);
 				context.drawTriangles(overlayIndexBuffer);
 				
 				context.setVertexBufferAt(1, null);

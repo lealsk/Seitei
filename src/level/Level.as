@@ -22,7 +22,7 @@ public class Level extends Sprite {
         _DFC = new DeferredShadingContainer();
         addChild(_DFC);
 
-        var bg:Quad = new Quad(700, 500, 0xbb8855);
+        var bg:Quad = new Quad(destructibleTerrain.getWallsTexture().width, destructibleTerrain.getWallsTexture().height, 0xbb8855);
         _DFC.addChild(bg);
 
 

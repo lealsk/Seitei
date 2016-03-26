@@ -146,8 +146,8 @@ public class Main extends Sprite {
     private function addBreakage(xPos:Number, yPos:Number):void{
 
         var breakage:Image = new Image(_assets.getTexture("break"));
-        breakage.x = xPos;
-        breakage.y = yPos;
+        breakage.x = xPos - breakage.width/2 - _mainContainer.x;
+        breakage.y = yPos - breakage.height/2 - _mainContainer.y;
         _destructibleTerrain.addBreakage(breakage);
 
     }

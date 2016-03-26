@@ -253,7 +253,7 @@ import starling.errors.MissingContextError;
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 14, screenDimensions, 1);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, lightDirection, 1);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 16, lightAngle, 1);
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 17, new <Number>[-globalPosition.x / destructibleTerrain.getWallsTexture().width, -globalPosition.y / destructibleTerrain.getWallsTexture().height, 0.0, 0.0]);
+			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 17, new <Number>[-globalPosition.x / stage.stageWidth, -globalPosition.y / stage.stageHeight, 0.0, 0.0]);
 			context.drawTriangles(indexBuffer, 0, mNumEdges);
 			
 			context.setVertexBufferAt(0, null);
@@ -377,7 +377,7 @@ import starling.errors.MissingContextError;
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 2, constants);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 3, shadowmapConstants2);
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 4, customConstants);
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, new <Number>[-globalPosition.x/destructibleTerrain.getWallsTexture().width, -globalPosition.y/destructibleTerrain.getWallsTexture().height, 0.0, 0.0]);
+			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 15, new <Number>[-globalPosition.x / stage.stageWidth, -globalPosition.y / stage.stageHeight, 0.0, 0.0]);
 			
 			context.setProgram(Starling.current.getProgram(SHADOWMAP_PROGRAM));
 			
