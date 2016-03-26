@@ -15,6 +15,7 @@ package {
  */
 
 import flash.display.Bitmap;
+import flash.geom.Point;
 
 import nape.geom.AABB;
 import nape.geom.Vec2;
@@ -43,6 +44,7 @@ import flash.display.Sprite;
 import flash.geom.Matrix;
 import nape_stuff.Terrain;
 
+[SWF(width="1024", height="600", frameRate="60", backgroundColor="#1d1d1d")]
 public class NapeDestructibleTerrain extends Template {
 
     public function NapeDestructibleTerrain():void {
@@ -55,17 +57,11 @@ public class NapeDestructibleTerrain extends Template {
 
     }
 
-    [Embed(source="assets/terrain_nape.png")]
+    [Embed(source="assets/terrain.png")]
     private var TerrainClass:Class;
 
     private var terrain:Terrain;
     private var bomb:Sprite;
-
-    public function getSpace():Space {
-
-        return space;
-
-    }
 
     override protected function init():void {
 
@@ -75,11 +71,12 @@ public class NapeDestructibleTerrain extends Template {
         createBorder();
 
         // Initialise terrain bitmap.
-        /*var bit:BitmapData = new BitmapData(w, h, true, 0);
-        bit.perlinNoise(200, 200, 2, 0x3ed, false, true, BitmapDataChannel.ALPHA, false);*/
+        var bit:BitmapData = new BitmapData(w, h, true, 0);
+        bit.perlinNoise(200, 200, 2, 0x3ed, false, true, BitmapDataChannel.ALPHA, false);
 
         var terrainClass:Bitmap = new TerrainClass();
         var bit:BitmapData = terrainClass.bitmapData;
+        bit.threshold(bit, bit.rect, new Point(), "==", 0xffffffff, 0x0000000, 0xffffffff);
 
         // Create initial terrain state, invalidating the whole screen.
         terrain = new Terrain(bit, 30, 5);

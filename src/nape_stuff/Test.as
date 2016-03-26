@@ -1,8 +1,14 @@
 package nape_stuff {
 
+import entities.Char;
+import entities.Entity;
+
 import flash.filesystem.File;
+import flash.ui.Keyboard;
+import flash.utils.Dictionary;
 
 import nape.geom.Vec2;
+import nape.phys.Body;
 import nape.phys.Body;
 import nape.phys.BodyType;
 import nape.shape.Circle;
@@ -31,8 +37,11 @@ import starling.utils.Color;
 public class Test extends Sprite {
 
     private var _debug:Debug;
-    private var _assets:AssetManager;
-    private var _space:Space;
+    private static var _assets:AssetManager;
+    private static var _space:Space;
+    private var _pressedKeys:Dictionary;
+    private var _char:Char;
+    private var _entities:Vector.<Entity>;
 
     public function Test() {
 
@@ -59,6 +68,8 @@ public class Test extends Sprite {
 
     private function init():void {
 
+        _entities = new <Entity>[];
+        _pressedKeys = new Dictionary();
         _debug = new BitmapDebug(stage.stageWidth, stage.stageHeight, 0x1d1d1d, true);
         _debug.display.alpha = 0.5;
         _debug.drawConstraints = true;
@@ -68,21 +79,24 @@ public class Test extends Sprite {
         addChild(bg);
 
         addEventListener(EnterFrameEvent.ENTER_FRAME, onEnterFrame);
+        addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
         addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
         addEventListener(TouchEvent.TOUCH, onTouch);
         var vec2:Vec2 = new Vec2(0, 500);
-        _space = new Space(vec2);
+        _space = new Space();
         createBorder();
 
+        createChar();
 
     }
 
-    private function onKeyUp(e:KeyboardEvent):void {
-
-        _debug.display.visible = !_debug.display.visible;
-
+    private function onKeyDown(e:KeyboardEvent):void{
+        _pressedKeys[e.keyCode] = true;
     }
 
+    private function onKeyUp(e:KeyboardEvent):void{
+        _pressedKeys[e.keyCode] = false;
+    }
 
     private function onEnterFrame(e:Event):void {
 
@@ -91,7 +105,12 @@ public class Test extends Sprite {
         _debug.draw(_space);
         _debug.flush();
 
-        _space.liveBodies.foreach(updateGraphics);
+        for each(var entity:Entity in _entities){
+            entity.update();
+        }
+
+        _space.bodies.foreach(updateGraphics);
+
 
     }
 
@@ -101,30 +120,46 @@ public class Test extends Sprite {
         dO.x = body.position.x;
         dO.y = body.position.y;
         dO.rotation = body.rotation;
+        trace(body.velocity);
 
     }
 
-    private function createObject(pos:Vec2):void {
+
+
+    private function createRandomObject(pos:Vec2):void {
 
         var image:Image = new Image(_assets.getTexture("nape_test"));
 
-        var body:Body = new Body(BodyType.DYNAMIC, pos);
         var size:int = 10 + Math.random() * 20;
-        body.shapes.add(new Circle(size));
-        body.space = _space;
-        body.debugDraw = true;
 
         image.pivotX = image.width / 2;
         image.pivotY = image.height / 2;
         image.width = size * 2;
         image.height = size * 2;
 
-
-        body.userData.graphics = image;
-
         addChild(image);
-        image.x = pos.x;
-        image.y = pos.y;
+
+        createBody(pos, image);
+
+    }
+
+    private function createChar():void {
+
+        _char = new Char("hero");
+        addChild(_char.getView());
+
+        _entities.push(_char);
+
+    }
+
+    private function createBody(pos:Vec2, dO:DisplayObject):void {
+
+        var body:Body = new Body(BodyType.DYNAMIC, pos);
+        body.shapes.add(new Circle(dO.width / 2));
+        body.space = _space;
+        body.debugDraw = true;
+        body.inertia = 5;
+        body.userData.graphics = dO;
 
     }
 
@@ -146,13 +181,18 @@ public class Test extends Sprite {
 
         if(began){
             var pos:Vec2 = Vec2.get(began.globalX, began.globalY);
-            createObject(pos);
+            createRandomObject(pos);
         }
-
-
-
-
     }
+
+    public static function getAssetManager():AssetManager {
+        return _assets;
+    }
+
+    public static function getSpace():Space {
+        return _space;
+    }
+
 
 
 

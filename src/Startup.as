@@ -36,8 +36,8 @@ public class Startup extends Sprite
 
         var viewport:Rectangle = new Rectangle(0, 0, 1024, 600);
 
-        //_starling = new Starling(Main, stage, viewport, stage3D, Context3DRenderMode.AUTO, Context3DProfile.STANDARD, QuadBatchPlus);
-        _starling = new Starling(Test, stage, viewport, stage3D, Context3DRenderMode.AUTO, Context3DProfile.STANDARD, QuadBatchPlus);
+        _starling = new Starling(Main, stage, viewport, stage3D, Context3DRenderMode.AUTO, Context3DProfile.STANDARD, QuadBatchPlus);
+        //_starling = new Starling(Test, stage, viewport, stage3D, Context3DRenderMode.AUTO, Context3DProfile.STANDARD, QuadBatchPlus);
         _starling.stage.stageWidth  = stage.stageWidth;
         _starling.stage.stageHeight = stage.stageHeight;
         _starling.enableErrorChecking = false;//true;
