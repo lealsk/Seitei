@@ -3,12 +3,19 @@ package {
 import entities.Char;
 
 import flash.filesystem.File;
+import flash.ui.Keyboard;
 import flash.utils.Dictionary;
 
 import level.Camera;
 import level.Level;
 
+import nape.geom.Vec2;
+import nape.phys.Body;
+
+import starling.core.Starling;
+
 import starling.display.Image;
+import starling.display.Quad;
 import starling.display.Sprite;
 import starling.events.Event;
 import starling.events.KeyboardEvent;
@@ -29,7 +36,7 @@ public class Main extends Sprite {
     private var _destructibleTerrain:DestructibleTerrain;
     private var _level:Level;
     private var _camera:Camera;
-
+    private var _napeDestructibleTerrain:NapeDestructibleTerrain;
     private static var _assets:AssetManager;
 
     //camera moves the main container, where the action happens, UI, HUD and other components of the game go in a different container.
@@ -39,6 +46,8 @@ public class Main extends Sprite {
 
         _assets = new AssetManager();
         loadAssets(init);
+        _napeDestructibleTerrain = new NapeDestructibleTerrain();
+        Starling.current.nativeOverlay.addChild(_napeDestructibleTerrain);
 
     }
 
@@ -64,14 +73,14 @@ public class Main extends Sprite {
         _pressedKeys = new Dictionary();
         _mainContainer = new Sprite();
         _destructibleTerrain = new DestructibleTerrain();
-        _destructibleTerrain.init(_assets.getTexture("test_terrain"));
+        _destructibleTerrain.init(_assets.getTexture("terrain"));
         _level = new Level(_assets, _destructibleTerrain);
         _mainContainer.addChild(_level);
 
         //lights
         _controlledLight = new SpotLight(0xFFFFFFFF, .2, 800,0);
         _controlledLight.castsShadows = true;
-        _controlledLight.angle = Math.PI*.8;
+        _controlledLight.angle = Math.PI * 0.8;
         _level.getDFC().addChild(_controlledLight);
 
         addChild(_mainContainer);
@@ -100,6 +109,10 @@ public class Main extends Sprite {
 
         _pressedKeys[e.keyCode] = false;
 
+        if(e.keyCode == Keyboard.F){
+            _napeDestructibleTerrain.showOrHide();
+        }
+
     }
 
     private function onTouch(e:TouchEvent):void{
@@ -120,13 +133,6 @@ public class Main extends Sprite {
             _mouseY = touch.globalY;
 
         }
-
-
-
-
-
-
-
     }
 
     private function onEnterFrame(e:Event):void{
@@ -140,15 +146,39 @@ public class Main extends Sprite {
         _camera.update(_char.getView().x, _char.getView().y, _mouseX, _mouseY);
         _controlledLight.rotation = Math.atan2(_mouseY - (_controlledLight.y + _mainContainer.y), _mouseX - (_controlledLight.x + _mainContainer.x)) - Math.PI * 0.4;
 
+        _napeDestructibleTerrain.getSpace().liveBodies.foreach(updateGraphics);
+
+    }
+
+    private function updateGraphics(body:Body):void {
+
+        var graphic:Quad = body.userData.graphics;
+        graphic.x = body.position.x;
+        graphic.y = body.position.y;
+        graphic.rotation = body.rotation;
+        trace(graphic.x, graphic.y);
 
     }
 
     private function addBreakage(xPos:Number, yPos:Number):void{
 
         var breakage:Image = new Image(_assets.getTexture("break"));
-        breakage.x = xPos;
-        breakage.y = yPos;
+
+        breakage.x = xPos - breakage.width/2 - _mainContainer.x;
+        breakage.y = yPos - breakage.height/2 - _mainContainer.y;
+
         _destructibleTerrain.addBreakage(breakage);
+
+        var quad:Quad = new Quad(30, 30);
+        quad.pivotX = quad.width / 2;
+        quad.pivotY = quad.height / 2;
+
+
+        _mainContainer.addChild(quad);
+        var pos:Vec2 = new Vec2(xPos, yPos);
+
+        _napeDestructibleTerrain.createObject(pos, quad);
+
 
     }
 
