@@ -1,10 +1,16 @@
 package entities {
-import starling.display.Image;
-import starling.textures.Texture;
+import nape.phys.Body;
+import nape.space.Space;
 
-public class Entity {
+import nape_stuff.Test;
+
+import starling.display.Image;
+import starling.events.EventDispatcher;
+
+public class Entity extends EventDispatcher{
 
     protected var _view:Image;
+    protected var _body:Body;
 
     public function Entity(entityName:String) {
 
@@ -18,7 +24,12 @@ public class Entity {
 
     }
 
+    //override
+    public function update():void {}
 
+    public function setSpace(space:Space):void {
+        _body.space = space;
+    }
 
 
 

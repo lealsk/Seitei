@@ -3,12 +3,13 @@ package
 import flash.display.Sprite;
 import flash.display.Stage3D;
 import flash.display.StageAlign;
-import flash.display.StageDisplayState;
 import flash.display.StageScaleMode;
 import flash.display3D.Context3DProfile;
 import flash.display3D.Context3DRenderMode;
 import flash.events.Event;
 import flash.geom.Rectangle;
+
+import nape_stuff.Test;
 
 import starling.core.Starling;
 import starling.extensions.deferredShading.display.QuadBatchPlus;
@@ -36,6 +37,7 @@ public class Startup extends Sprite
         var viewport:Rectangle = new Rectangle(0, 0, 1024, 600);
 
         _starling = new Starling(Main, stage, viewport, stage3D, Context3DRenderMode.AUTO, Context3DProfile.STANDARD, QuadBatchPlus);
+        //_starling = new Starling(Test, stage, viewport, stage3D, Context3DRenderMode.AUTO, Context3DProfile.STANDARD, QuadBatchPlus);
         _starling.stage.stageWidth  = stage.stageWidth;
         _starling.stage.stageHeight = stage.stageHeight;
         _starling.enableErrorChecking = false;//true;
