@@ -15,6 +15,7 @@ package {
  */
 
 import flash.display.Bitmap;
+import flash.display.DisplayObject;
 import flash.geom.Point;
 
 import nape.geom.AABB;
@@ -26,12 +27,6 @@ import nape.shape.Polygon;
 import nape.space.Space;
 
 import nape_stuff.Template;
-
-import starling.display.DisplayObject;
-
-import starling.display.Image;
-import starling.display.Quad;
-import starling.utils.Color;
 
 // Template class is used so that this sample may
 // be as concise as possible in showing Nape features without
@@ -101,8 +96,9 @@ public class NapeDestructibleTerrain extends Template {
 
     }
 
-    public function createObject(pos:Vec2, userData:DisplayObject = null):void {
+    public function createObject(pos:Vec2, dO:DisplayObject = null):void {
 
+        trace("once");
         var body:Body = new Body(BodyType.DYNAMIC, pos);
 
 
@@ -118,10 +114,14 @@ public class NapeDestructibleTerrain extends Template {
         }
         body.space = space;
 
-        if(userData){
-            body.userData.graphics = userData;
-        }
-        trace(body.userData);
+        //if(dO){
+            var sprite:Sprite = new Sprite();
+            sprite.graphics.beginFill(0xffffff, 1);
+            sprite.graphics.drawCircle(0, 0, 10);
+            body.userData.graphics = sprite;
+            addChild(sprite);
+        //}
+
 
     }
 

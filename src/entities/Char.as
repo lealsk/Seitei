@@ -8,6 +8,7 @@ import nape.geom.Vec2;
 import nape.phys.Body;
 import nape.phys.BodyType;
 import nape.shape.Circle;
+import nape.space.Space;
 
 import nape_stuff.Test;
 
@@ -28,12 +29,17 @@ public class Char extends Entity {
 
         super(entityName);
         _view.pivotX = _view.pivotY = _view.width >> 1;
+        _view.name = "HERO";
         createBody();
 
         _speedVec = new Vec2(0, 0);
         _pressedKeys = new Dictionary();
         _view.addEventListener(Event.ADDED_TO_STAGE, onAdded);
 
+    }
+
+    public function getSpace():Space {
+        return _body.space;
     }
 
     private function onAdded(e:Event):void {

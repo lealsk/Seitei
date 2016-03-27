@@ -3,7 +3,6 @@ import entities.Char;
 import entities.Entity;
 
 import flash.display.Bitmap;
-
 import flash.display.BitmapData;
 import flash.display.BlendMode;
 import flash.display.Sprite;
@@ -11,12 +10,7 @@ import flash.geom.Matrix;
 import flash.geom.Point;
 
 import nape.geom.AABB;
-import nape.geom.Vec2;
-
 import nape.phys.Body;
-import nape.phys.BodyType;
-import nape.shape.Circle;
-import nape.shape.Polygon;
 import nape.space.Space;
 import nape.util.BitmapDebug;
 import nape.util.Debug;
@@ -25,13 +19,9 @@ import nape_stuff.Terrain;
 
 import starling.core.Starling;
 import starling.display.DisplayObject;
-
 import starling.display.Quad;
 import starling.display.Sprite;
 import starling.events.Event;
-import starling.events.Touch;
-import starling.events.TouchEvent;
-import starling.events.TouchPhase;
 import starling.extensions.deferredShading.display.DeferredShadingContainer;
 import starling.extensions.deferredShading.lights.AmbientLight;
 import starling.utils.AssetManager;
@@ -92,9 +82,9 @@ public class Level extends starling.display.Sprite {
         var region:AABB = AABB.fromRect(_breackage.getBounds(_breackage));
         region.x += xPos;
         region.y += yPos;
+
         _napeTerrain.invalidate(region, _space);
 
-        _char.setSpace(_space);
 
     }
 
@@ -157,22 +147,26 @@ public class Level extends starling.display.Sprite {
         for each(var entity:Entity in _entities){
 
             entity.update();
+
         }
 
-        _space.bodies.foreach(updateGraphics);
+        _space.liveBodies.foreach(updateGraphics);
 
     }
 
     private function updateGraphics(body:Body):void {
 
         var dO:DisplayObject = body.userData.graphics;
+
         dO.x = body.position.x;
         dO.y = body.position.y;
         dO.rotation = body.rotation;
 
     }
 
-
+    public function getDebugView():Debug {
+        return _debug;
+    }
 
     private function createBorder():void {
 

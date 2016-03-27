@@ -28,7 +28,6 @@ public class Terrain implements IsoFunction {
     private var isoBounds:AABB;
     public var isoGranularity:Vec2;
     public var isoQuality:int = 8;
-    private var _counter:int;
 
     public function Terrain(bitmap:BitmapData, cellSize:Number, subSize:Number):void {
 

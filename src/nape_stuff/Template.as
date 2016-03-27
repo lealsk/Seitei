@@ -272,6 +272,29 @@ public class Template extends Sprite {
             postUpdate(deltaTime * 0.001);
             debug.flush();
         }
+
+        space.liveBodies.foreach(updateGraphics);
+
     }
+
+    private function updateGraphics(body:Body){
+
+        trace(body.id);
+        body.userData.graphics.x = body.position.x;
+        body.userData.graphics.y = body.position.y;
+        body.userData.graphics.rotation = body.rotation;
+
+    }
+
+
+
+
+
+
+
+
+
+
+
 }
 }

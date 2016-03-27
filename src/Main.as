@@ -107,8 +107,11 @@ public class Main extends Sprite {
         _controlledLight.x = charX; //+ _level.getChar().getView().width/2;
         _controlledLight.y = charY;//+ _level.getChar().getView().height/2;
 
-        //_camera.update(charX, charY, _mouseX, _mouseY);
+        _camera.update(charX, charY, _mouseX, _mouseY);
         _controlledLight.rotation = Math.atan2(_mouseY - (_controlledLight.y + _mainContainer.y), _mouseX - (_controlledLight.x + _mainContainer.x)) - Math.PI * 0.4;
+
+        _level.getDebugView().display.x = _camera.getXCamPos();
+        _level.getDebugView().display.y = _camera.getYCamPos();
 
     }
 
@@ -119,8 +122,9 @@ public class Main extends Sprite {
         breakage.x = xPos - breakage.width/2 - _mainContainer.x;
         breakage.y = yPos - breakage.height/2 - _mainContainer.y;
 
+        //TODO maybe merge both terrains together into one class?
         _destructibleTerrain.addBreakage(breakage);
-        _level.addBreakage(xPos, yPos);
+        _level.addBreakage(xPos - _camera.getXCamPos(), yPos - _camera.getYCamPos());
 
         //var pos:Vec2 = new Vec2(xPos, yPos);
 

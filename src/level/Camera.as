@@ -1,11 +1,7 @@
 package level {
 
-import starling.core.Starling;
 import starling.display.DisplayObject;
 import starling.events.EventDispatcher;
-import starling.events.Touch;
-import starling.events.TouchEvent;
-import starling.events.TouchPhase;
 
 public class Camera extends EventDispatcher{
 
@@ -14,6 +10,8 @@ public class Camera extends EventDispatcher{
     private var _stageWidth:int;
     private var _stageHeight:int;
     private var _displayObject:DisplayObject;
+    private var _camPosX:int;
+    private var _camPosY:int;
 
     public function Camera(displayObject:DisplayObject) {
 
@@ -25,15 +23,18 @@ public class Camera extends EventDispatcher{
 
     public function update(posX:int, posY:int, mouseX:int, mouseY:int):void {
 
-        _displayObject.x =  int(SEE_DISTANCE - (mouseX / _stageWidth) * SEE_DISTANCE * 2 + _stageWidth / 2 - posX);
-        _displayObject.y =  int(SEE_DISTANCE - (mouseY / _stageHeight) * SEE_DISTANCE * 2 + _stageHeight / 2 - posY);
-
+        _displayObject.x = _camPosX = int(SEE_DISTANCE - (mouseX / _stageWidth) * SEE_DISTANCE * 2 + _stageWidth / 2 - posX);
+        _displayObject.y = _camPosY = int(SEE_DISTANCE - (mouseY / _stageHeight) * SEE_DISTANCE * 2 + _stageHeight / 2 - posY);
 
     }
 
+    public function getXCamPos():int {
+        return _camPosX;
+    }
 
-
-
+    public function getYCamPos():int {
+        return _camPosY;
+    }
 
 
 
